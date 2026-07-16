@@ -117,19 +117,9 @@ export default async function BookPage({
       <EscapeBack />
       <Link
         href="/"
-        className="group fixed left-4 top-4 z-10 flex flex-col items-start text-ink sm:left-6 sm:top-6"
+        className="font-display fixed left-4 top-4 z-10 text-[13px] tracking-wide text-ink hover:underline sm:left-6 sm:top-6"
       >
-        <span
-          className="text-[clamp(36px,3.8vw,54px)] leading-none"
-          style={{ fontFamily: "var(--font-devanagari)" }}
-        >
-          आरू
-        </span>
-        {/* Tucked into the logo line box's descender room, like the
-            masthead wordmark on the table page */}
-        <span className="font-display -mt-[0.35em] text-[11px] tracking-wide group-hover:underline">
-          &larr; BACK
-        </span>
+        &larr; BACK
       </Link>
 
       {/* No scene-wide preserve-3d: WebKit sorts 3D siblings unreliably

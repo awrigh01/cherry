@@ -99,10 +99,11 @@ const PALETTES: readonly Palette[] = [
   { bg: "#b9a3e3", fg: "#141414" }, // lavender + black
 ];
 
-/** Rows in the opening view (both breakpoints, plus early drift) where black
- * covers are excluded so the ink masthead always reads against the table. */
-const MASTHEAD_ROWS = 15;
-
+/**
+ * Cover copy banks, in the spirit of Maya Man's FAKE IT TILL YOU MAKE IT:
+ * Instagram wellness / girlboss mantra language, collage-able, tipping from
+ * cliché into absurd — still living in a cherry orchard.
+ */
 const NOUNS = [
   "CHERRY",
   "ORCHARD",
@@ -111,24 +112,26 @@ const NOUNS = [
   "BLOSSOM",
   "JAM",
   "PIE",
-  "TREE",
   "BASKET",
   "HARVEST",
-  "GROVE",
-  "PICNIC",
+  "AURA",
+  "ERA",
+  "GLOW",
+  "VIBE",
+  "SOFTNESS",
 ] as const;
 
 const VERBS = [
-  "PICK",
-  "TASTE",
-  "PLANT",
-  "SHARE",
-  "CLIMB",
-  "DREAM",
-  "SNACK",
-  "WANDER",
-  "SAVOR",
-  "GATHER",
+  "MANIFEST",
+  "ROMANTICIZE",
+  "PROTECT",
+  "FAKE",
+  "HEAL",
+  "CRAVE",
+  "DESERVE",
+  "SCARE",
+  "SOFTLAUNCH",
+  "CURATE",
 ] as const;
 
 /** Every book is authored by an Aru; surnames are cherry varieties. */
@@ -148,27 +151,18 @@ const CHERRY_VARIETIES = [
 ] as const;
 
 const ADJECTIVES = [
-  "SWEET",
-  "SOUR",
-  "WILD",
   "RIPE",
-  "DARK",
+  "SOFT",
+  "DELUSIONAL",
+  "TOXIC",
+  "SWEET",
+  "UNBOTHERED",
+  "MAIN",
+  "PRETTY",
+  "HEALING",
+  "CHAOTIC",
   "STOLEN",
-  "SECRET",
-  "LAST",
-  "FIRST",
   "PERFECT",
-] as const;
-
-const TIMES = [
-  "MIDNIGHT",
-  "DAWN",
-  "NOON",
-  "DUSK",
-  "SUNRISE",
-  "SUPPER",
-  "HARVEST",
-  "MIDSUMMER",
 ] as const;
 
 /** If two slot words collide, replace the second with its bank neighbor. */
@@ -186,132 +180,195 @@ interface TitleTemplate {
   build: (words: string[]) => string[];
 }
 
-/** Slogan-shaped title templates, all about Aru and cherries. */
+/** Mantra-shaped title templates — short, uppercase, a little unhinged. */
 const TEMPLATES: readonly TitleTemplate[] = [
-  { banks: [ADJECTIVES, NOUNS], build: (w) => ["ARU", "EATS", "EVERY", ...w] },
+  {
+    banks: [ADJECTIVES, NOUNS],
+    build: ([a, n]) => ["YOU", "DESERVE", "EVERY", a, n],
+  },
+  {
+    banks: [VERBS],
+    build: ([v]) => ["FAKE", "IT", "TILL", "YOU", v, "IT"],
+  },
+  {
+    banks: [ADJECTIVES],
+    build: ([a]) => ["MAIN", "CHARACTER", "IN", "THE", a, "ORCHARD"],
+  },
+  {
+    banks: [NOUNS],
+    build: ([n]) => ["STOP", "APOLOGIZING", "FOR", "THE", n],
+  },
+  {
+    banks: [ADJECTIVES],
+    build: ([a]) => ["YOUR", "BEST", "LIFE", "IS", a],
+  },
+  {
+    banks: [ADJECTIVES, NOUNS],
+    build: ([a, n]) => ["SOFT", "GIRL", a, n],
+  },
+  {
+    banks: [VERBS, NOUNS],
+    build: ([v, n]) => [v, "THE", n],
+  },
+  {
+    banks: [ADJECTIVES, NOUNS],
+    build: ([a, n]) => ["BE", a, "ABOUT", n],
+  },
+  {
+    banks: [ADJECTIVES, ADJECTIVES],
+    build: ([a, b]) => [a, "BUT", shiftIfEqual(b, a, ADJECTIVES)],
+  },
+  {
+    banks: [NOUNS],
+    build: ([n]) => ["MANIFEST", "A", n],
+  },
+  {
+    banks: [ADJECTIVES, NOUNS],
+    build: ([a, n]) => ["THAT", "GIRL", "EATS", a, n],
+  },
+  {
+    banks: [VERBS, NOUNS],
+    build: ([v, n]) => [v, "YOUR", n, "ENERGY"],
+  },
+  {
+    banks: [ADJECTIVES, NOUNS],
+    build: ([a, n]) => [a, "AND", n],
+  },
+  {
+    banks: [NOUNS],
+    build: ([n]) => ["CHERRY", "GIRL", n, "FOREVER"],
+  },
+  {
+    banks: [NOUNS],
+    build: ([n]) => ["LOVE", "YOURSELF", "LOUDER", "THAN", "THE", n],
+  },
+  {
+    banks: [NOUNS],
+    build: ([n]) => ["HEALING", "IS", "A", n],
+  },
+  {
+    banks: [NOUNS],
+    build: ([n]) => ["NO", "THOUGHTS", "JUST", n],
+  },
+  {
+    banks: [NOUNS],
+    build: ([n]) => ["BE", "THE", n, "THEY", "CAN'T", "HAVE"],
+  },
+  {
+    banks: [ADJECTIVES],
+    build: ([a]) => ["YOUR", "AURA", "IS", a],
+  },
+  {
+    banks: [ADJECTIVES, ADJECTIVES],
+    build: ([a, b]) => [a, "AND", shiftIfEqual(b, a, ADJECTIVES)],
+  },
+  {
+    banks: [NOUNS],
+    build: ([n]) => ["SCARE", "THEM", "WITH", "YOUR", n],
+  },
+  {
+    banks: [NOUNS],
+    build: ([n]) => ["PRETTY", "GIRLS", "EAT", "THE", "WHOLE", n],
+  },
+  {
+    banks: [ADJECTIVES, NOUNS],
+    build: ([a, n]) => ["THIS", "IS", "YOUR", a, n],
+  },
+  {
+    banks: [VERBS],
+    build: ([v]) => ["TOUCH", "GRASS", v, "CHERRIES"],
+  },
   {
     banks: [NOUNS, NOUNS],
-    build: ([x, y]) => ["OUR", x, "IS", "YOUR", shiftIfEqual(y, x, NOUNS)],
+    build: ([x, y]) => ["BOUNDARIES", "AND", shiftIfEqual(y, x, NOUNS)],
+  },
+  {
+    banks: [ADJECTIVES],
+    build: ([a]) => ["YOU'RE", "NOT", "TOO", "MUCH", "YOU'RE", a],
+  },
+  {
+    banks: [NOUNS],
+    build: ([n]) => ["CRINGE", "IS", "A", n],
   },
   {
     banks: [ADJECTIVES, NOUNS],
-    build: (w) => ["SEE", "ARU", "AT", "THE", ...w],
-  },
-  {
-    banks: [ADJECTIVES, NOUNS],
-    build: ([a, n]) => ["FROM", "THE", a, n, "FOR", "ARU"],
-  },
-  {
-    banks: [VERBS, VERBS, VERBS, VERBS],
-    build: ([a, b, c, d]) => {
-      const second = shiftIfEqual(b, a, VERBS);
-      const third = shiftIfEqual(c, second, VERBS);
-      return [a, second, third, shiftIfEqual(d, third, VERBS)];
-    },
-  },
-  {
-    banks: [NOUNS, NOUNS],
-    build: ([x, y]) => ["NO", x, "NO", shiftIfEqual(y, x, NOUNS)],
-  },
-  { banks: [ADJECTIVES, NOUNS], build: (w) => ["ARU", "LOVES", ...w] },
-  { banks: [ADJECTIVES, NOUNS], build: (w) => ["ARU", "AND", "THE", ...w] },
-  { banks: [ADJECTIVES, NOUNS], build: (w) => ["ARU", "SAVED", "THE", ...w] },
-  {
-    banks: [ADJECTIVES, NOUNS],
-    build: ([a, n]) => ["THIS", "IS", a, n, "SEASON"],
-  },
-  {
-    banks: [NOUNS, NOUNS],
-    build: ([x, y]) => [x, "AFTER", shiftIfEqual(y, x, NOUNS)],
-  },
-  {
-    banks: [ADJECTIVES, NOUNS],
-    build: ([a, n]) => ["A", a, n, "FOR", "ARU"],
-  },
-  {
-    banks: [ADJECTIVES, TIMES],
-    build: ([a, t]) => [a, "CHERRIES", "AT", t],
-  },
-  { banks: [ADJECTIVES, NOUNS], build: (w) => ["THE", ...w, "CLUB"] },
-  {
-    banks: [VERBS, TIMES],
-    build: ([v, t]) => ["ARU", `${v}S`, "AT", t],
+    build: ([a, n]) => ["LIVE", "LAUGH", a, n],
   },
 ];
 
-/** Hindi word banks, split by grammatical gender so adjective templates
- * agree (feminine forms pair with feminine nouns). */
+/** Hindi word banks — same mantra energy, cherry orchard vocabulary. */
 const HI_NOUNS_FEM = [
   "चेरी", // cherry
   "टोकरी", // basket
-  "डाली", // branch
-  "गुठली", // pit
   "फ़सल", // harvest
+  "आभा", // aura
+  "मिठास", // sweetness
   "कहानी", // story
-  "चाँदनी", // moonlight
   "बग़िया", // little garden
-] as const;
-
-const HI_NOUNS_MASC = [
-  "बाग़", // orchard
-  "पेड़", // tree
-  "मुरब्बा", // jam
-  "गीत", // song
-  "मेला", // fair
-  "सफ़र", // journey
+  "ऊर्जा", // energy
 ] as const;
 
 const HI_ADJECTIVES = [
   "मीठी", // sweet
-  "खट्टी", // sour
-  "जंगली", // wild
   "पकी", // ripe
-  "पहली", // first
-  "आख़िरी", // last
-  "लाल", // red
-  "काली", // dark
+  "नरम", // soft
+  "जंगली", // wild
+  "खास", // special
   "ताज़ी", // fresh
   "रसीली", // juicy
+  "खतरनाक", // dangerous
 ] as const;
 
 const HI_VERBS = [
+  "सजाओ", // adorn / curate
+  "बचाओ", // protect/save
+  "चाहो", // crave/want
   "खाओ", // eat
-  "तोड़ो", // pick
   "बाँटो", // share
   "चखो", // taste
-  "उगाओ", // grow
-  "बचाओ", // save
 ] as const;
 
-/** Slogan-shaped Hindi templates, same Aru-and-cherries world. */
+/** Hindi mantra templates — short stacked affirmations. */
 const TEMPLATES_HI: readonly TitleTemplate[] = [
   {
     banks: [HI_ADJECTIVES, HI_NOUNS_FEM],
-    build: ([a, n]) => ["आरू", "और", a, n], // Aru and the sweet cherry
+    build: ([a, n]) => ["तुम", "हर", a, n, "के", "हक़दार", "हो"],
   },
   {
     banks: [HI_ADJECTIVES],
-    build: ([a]) => [a, "चेरी", "का", "मौसम"], // season of ripe cherries
+    build: ([a]) => ["तुम्हारी", "आभा", a, "है"],
   },
   {
-    banks: [HI_NOUNS_MASC],
-    build: ([n]) => ["आरू", "का", n], // Aru's orchard
-  },
-  {
-    banks: [HI_ADJECTIVES, HI_NOUNS_FEM],
-    build: ([a, n]) => [a, n, "आरू", "के", "लिए"], // a sweet cherry for Aru
-  },
-  {
-    banks: [HI_NOUNS_FEM, HI_VERBS],
-    build: ([n, v]) => [n, v], // eat cherries
-  },
-  {
-    banks: [HI_VERBS, HI_VERBS],
-    build: ([a, b]) => [a, "और", shiftIfEqual(b, a, HI_VERBS)], // pick and share
+    banks: [HI_NOUNS_FEM],
+    build: ([n]) => ["कोई", "सोच", "नहीं", "बस", n],
   },
   {
     banks: [HI_ADJECTIVES, HI_NOUNS_FEM],
-    build: ([a, n]) => ["हर", n, a, "है"], // every cherry is sweet
+    build: ([a, n]) => ["नरम", "लड़की", a, n],
+  },
+  {
+    banks: [HI_VERBS, HI_NOUNS_FEM],
+    build: ([v, n]) => [v, "अपनी", n],
+  },
+  {
+    banks: [HI_ADJECTIVES, HI_ADJECTIVES],
+    build: ([a, b]) => [a, "मगर", shiftIfEqual(b, a, HI_ADJECTIVES)],
+  },
+  {
+    banks: [HI_NOUNS_FEM],
+    build: ([n]) => ["इलाज", "है", "एक", n],
+  },
+  {
+    banks: [HI_ADJECTIVES],
+    build: ([a]) => ["मुख्य", "किरदार", a, "बाग़", "में"],
+  },
+  {
+    banks: [HI_NOUNS_FEM],
+    build: ([n]) => ["माफ़ी", "माँगना", "बंद", "करो", n, "के", "लिए"],
+  },
+  {
+    banks: [HI_NOUNS_FEM],
+    build: ([n]) => ["बनो", "वो", n, "जो", "मिल", "नहीं", "सकती"],
   },
 ];
 
@@ -356,30 +413,30 @@ const buildTitle = (id: number): { lines: string[]; lang: TitleLang } =>
       };
 
 const OPENERS = [
-  "A field guide to cherry picking with Aru",
-  "Part manifesto, part love letter to the orchard",
-  "The true story of Aru and one impossible cherry tree",
-  "An unhurried walk through the grove with Aru",
-  "Notes collected from the bottom of Aru's cherry basket",
-  "A loud argument for cherries at breakfast",
+  "A soft-launch field guide to wanting more cherries",
+  "Part self-help, part orchard delusion",
+  "The main-character edit of one impossible harvest",
+  "Notes from the comments section under a cherry tree",
+  "A wellness retreat that never left the picnic blanket",
+  "An affirmation deck for girls who stain their fingers",
 ] as const;
 
 const MIDDLES = [
-  "set across one long summer of stained fingers and spat pits",
-  "told in dog-eared chapters and cherry-stem bookmarks",
-  "written on the backs of jam-jar labels",
-  "traced through nine orchards and one impossible pie contest",
-  "recorded between the last blossom and the first frost",
-  "assembled from postcards Aru never mailed",
+  "collaged from captions Aru almost posted",
+  "told in bubble type and slightly unhinged confidence",
+  "written like a story you'd screenshot and never reread",
+  "traced through nine soft launches and one hard jam",
+  "recorded between the last glow-up and the first frost",
+  "assembled from mantras that sound true until they don't",
 ] as const;
 
 const CLOSERS = [
-  "Aru asks only that you save the last cherry.",
-  "Bring napkins. You will need them.",
-  "The pie is different every time you arrive at it.",
-  "Best read aloud under a cherry tree.",
-  "It was never supposed to leave the orchard.",
-  "Every cherry is the first cherry of someone.",
+  "Manifest the last cherry. Then eat it.",
+  "Protect your stem energy.",
+  "You're not too much. You're ripe.",
+  "Romanticize the pit.",
+  "Fake it till you pick it.",
+  "No thoughts. Just jam.",
 ] as const;
 
 interface SizeVariant {
@@ -463,23 +520,13 @@ export const getBook = (id: number): Book => {
   // Palettes walk the grid with strides (3 across, 4 down) chosen so no two
   // touching books — horizontally, vertically, or diagonally — share one.
   // Blank pieces are the near-empty letterhead / business-card wordmark ones.
-  // Within the masthead rows, black covers swap 6 palette slots ahead (a
-  // spacing no two touching cells can have, so the swap can't create an
-  // adjacent duplicate) and blank cards stay white.
-  const paletteIndex = (col * 3 + row * 4) % PALETTES.length;
-  let palette: Palette =
+  const palette: Palette =
     kind === "blank"
       ? pick(rand, [
           { bg: "#ffffff", fg: "#141414" },
           { bg: "#141414", fg: "#ffffff" },
         ] as const)
-      : PALETTES[paletteIndex];
-  if (row < MASTHEAD_ROWS && palette.bg === "#141414") {
-    palette =
-      kind === "blank"
-        ? { bg: "#ffffff", fg: "#141414" }
-        : PALETTES[(paletteIndex + 6) % PALETTES.length];
-  }
+      : PALETTES[(col * 3 + row * 4) % PALETTES.length];
 
   const rotationRoll = rand();
   const bleedRoll = rand();
