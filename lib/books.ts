@@ -241,6 +241,8 @@ const HI_NOUNS_FEM = [
   "गुठली", // pit
   "फ़सल", // harvest
   "कहानी", // story
+  "चाँदनी", // moonlight
+  "बग़िया", // little garden
 ] as const;
 
 const HI_NOUNS_MASC = [
@@ -248,6 +250,8 @@ const HI_NOUNS_MASC = [
   "पेड़", // tree
   "मुरब्बा", // jam
   "गीत", // song
+  "मेला", // fair
+  "सफ़र", // journey
 ] as const;
 
 const HI_ADJECTIVES = [
@@ -259,6 +263,8 @@ const HI_ADJECTIVES = [
   "आख़िरी", // last
   "लाल", // red
   "काली", // dark
+  "ताज़ी", // fresh
+  "रसीली", // juicy
 ] as const;
 
 const HI_VERBS = [
@@ -331,14 +337,14 @@ const titleFrom = (
   return build(slotValues((k * stride + t * 11) % total, banks));
 };
 
-/** Every 4th book gets a Hindi title; the rest are English. Each language
+/** Every 3rd book gets a Hindi title; the rest are English. Each language
  * walks its own template cycle (keys count only that language's books) so
  * the mix stays deterministic and repeat-resistant. */
 const buildTitle = (id: number): { lines: string[]; lang: TitleLang } =>
-  id % 4 === 1
-    ? { lines: titleFrom(Math.floor(id / 4), TEMPLATES_HI), lang: "hi" }
+  id % 3 === 1
+    ? { lines: titleFrom(Math.floor(id / 3), TEMPLATES_HI), lang: "hi" }
     : {
-        lines: titleFrom(id - Math.floor((id + 2) / 4), TEMPLATES),
+        lines: titleFrom(id - Math.floor((id + 1) / 3), TEMPLATES),
         lang: "en",
       };
 
