@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Anek_Devanagari, Archivo, Archivo_Black } from "next/font/google";
 import "./globals.css";
 
@@ -25,6 +25,18 @@ export const metadata: Metadata = {
 };
 
 /**
+ * Lock the visual viewport on Safari / iOS: no horizontal pan, and the
+ * layout stays edge-to-edge under the notch. Vertical scroll still works
+ * (the table pans that way); overscroll rubber-banding is killed in CSS.
+ */
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  viewportFit: "cover",
+};
+
+/**
  * RootLayout - Application shell that loads the brand fonts
  * (Archivo Black for Latin display type, Anek Devanagari for Hindi covers,
  * Archivo for body copy).
@@ -39,7 +51,7 @@ export default function RootLayout({
       lang="en"
       className={`${archivo.variable} ${archivoBlack.variable} ${anekDevanagari.variable} h-full antialiased`}
     >
-      <body className="min-h-full">{children}</body>
+      <body className="min-h-dvh">{children}</body>
     </html>
   );
 }

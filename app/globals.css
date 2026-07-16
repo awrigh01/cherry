@@ -13,6 +13,15 @@
   --font-display: var(--font-archivo-black);
 }
 
+/* Kill Safari/iOS rubber-band pan: no horizontal overflow, no pull-to-
+   refresh / overscroll bounce, and touch gestures may only scroll on Y.
+   The infinite table still pans via document scroll. */
+html {
+  overflow-x: clip;
+  overscroll-behavior: none;
+  width: 100%;
+}
+
 /* Woven-linen tabletop: two anisotropic turbulence layers (dark warp
    streaks running one way, light weft the other) tiled over the flat table
    color. Pure SVG noise — subtle, seamless (stitchTiles), painted once. */
@@ -22,6 +31,12 @@ body {
   background-size: 280px 280px;
   color: var(--ink);
   font-family: var(--font-archivo), sans-serif;
+  overflow-x: clip;
+  overscroll-behavior: none;
+  touch-action: pan-y;
+  width: 100%;
+  /* Prevent iOS from resizing the layout when the URL bar shows/hides */
+  min-height: 100dvh;
 }
 
 /* --- Table card hover: grow slightly and give a quick shake --- */
