@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Anek_Devanagari, Archivo, Archivo_Black } from "next/font/google";
+import { Archivo, Archivo_Black } from "next/font/google";
 import "./globals.css";
 
 const archivo = Archivo({
@@ -11,12 +11,6 @@ const archivoBlack = Archivo_Black({
   variable: "--font-archivo-black",
   weight: "400",
   subsets: ["latin"],
-});
-
-const anekDevanagari = Anek_Devanagari({
-  variable: "--font-devanagari",
-  weight: "800",
-  subsets: ["devanagari"],
 });
 
 export const metadata: Metadata = {
@@ -38,8 +32,7 @@ export const viewport: Viewport = {
 
 /**
  * RootLayout - Application shell that loads the brand fonts
- * (Archivo Black for Latin display type, Anek Devanagari for Hindi covers,
- * Archivo for body copy).
+ * (Archivo Black for display type, Archivo for body copy).
  */
 export default function RootLayout({
   children,
@@ -49,7 +42,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${archivo.variable} ${archivoBlack.variable} ${anekDevanagari.variable} h-full antialiased`}
+      className={`${archivo.variable} ${archivoBlack.variable} h-full antialiased`}
     >
       <body className="min-h-dvh">{children}</body>
     </html>

@@ -10,7 +10,6 @@ import {
   ROTATED_MIN_SIZE,
   rotatedMeasureRatio,
   titleMaxSize,
-  type TitleLang,
 } from "@/lib/type";
 
 /** Physical kind of printed piece, mirroring the reference photo. */
@@ -31,8 +30,6 @@ export interface Palette {
 export interface Book {
   /** Stable numeric id (also the URL segment) */
   id: number;
-  /** Script the cover title is set in */
-  lang: TitleLang;
   /** Cover title, one word per line */
   titleLines: string[];
   /** Title joined with spaces, for metadata and the spread page */
@@ -134,7 +131,7 @@ const VERBS = [
   "CURATE",
 ] as const;
 
-/** Every book is authored by an Aru; surnames are cherry varieties. */
+/** Pen names for the inside page — cherry varieties, no given name. */
 const CHERRY_VARIETIES = [
   "BING",
   "RAINIER",
@@ -296,82 +293,6 @@ const TEMPLATES: readonly TitleTemplate[] = [
   },
 ];
 
-/** Hindi word banks — same mantra energy, cherry orchard vocabulary. */
-const HI_NOUNS_FEM = [
-  "चेरी", // cherry
-  "टोकरी", // basket
-  "फ़सल", // harvest
-  "आभा", // aura
-  "मिठास", // sweetness
-  "कहानी", // story
-  "बग़िया", // little garden
-  "ऊर्जा", // energy
-] as const;
-
-const HI_ADJECTIVES = [
-  "मीठी", // sweet
-  "पकी", // ripe
-  "नरम", // soft
-  "जंगली", // wild
-  "खास", // special
-  "ताज़ी", // fresh
-  "रसीली", // juicy
-  "खतरनाक", // dangerous
-] as const;
-
-const HI_VERBS = [
-  "सजाओ", // adorn / curate
-  "बचाओ", // protect/save
-  "चाहो", // crave/want
-  "खाओ", // eat
-  "बाँटो", // share
-  "चखो", // taste
-] as const;
-
-/** Hindi mantra templates — short stacked affirmations. */
-const TEMPLATES_HI: readonly TitleTemplate[] = [
-  {
-    banks: [HI_ADJECTIVES, HI_NOUNS_FEM],
-    build: ([a, n]) => ["तुम", "हर", a, n, "के", "हक़दार", "हो"],
-  },
-  {
-    banks: [HI_ADJECTIVES],
-    build: ([a]) => ["तुम्हारी", "आभा", a, "है"],
-  },
-  {
-    banks: [HI_NOUNS_FEM],
-    build: ([n]) => ["कोई", "सोच", "नहीं", "बस", n],
-  },
-  {
-    banks: [HI_ADJECTIVES, HI_NOUNS_FEM],
-    build: ([a, n]) => ["नरम", "लड़की", a, n],
-  },
-  {
-    banks: [HI_VERBS, HI_NOUNS_FEM],
-    build: ([v, n]) => [v, "अपनी", n],
-  },
-  {
-    banks: [HI_ADJECTIVES, HI_ADJECTIVES],
-    build: ([a, b]) => [a, "मगर", shiftIfEqual(b, a, HI_ADJECTIVES)],
-  },
-  {
-    banks: [HI_NOUNS_FEM],
-    build: ([n]) => ["इलाज", "है", "एक", n],
-  },
-  {
-    banks: [HI_ADJECTIVES],
-    build: ([a]) => ["मुख्य", "किरदार", a, "बाग़", "में"],
-  },
-  {
-    banks: [HI_NOUNS_FEM],
-    build: ([n]) => ["माफ़ी", "माँगना", "बंद", "करो", n, "के", "लिए"],
-  },
-  {
-    banks: [HI_NOUNS_FEM],
-    build: ([n]) => ["बनो", "वो", n, "जो", "मिल", "नहीं", "सकती"],
-  },
-];
-
 /** Decompose a combination index into one word per bank. */
 const slotValues = (
   idx: number,
@@ -401,16 +322,8 @@ const titleFrom = (
   return build(slotValues((k * stride + t * 11) % total, banks));
 };
 
-/** Every 3rd book gets a Hindi title; the rest are English. Each language
- * walks its own template cycle (keys count only that language's books) so
- * the mix stays deterministic and repeat-resistant. */
-const buildTitle = (id: number): { lines: string[]; lang: TitleLang } =>
-  id % 3 === 1
-    ? { lines: titleFrom(Math.floor(id / 3), TEMPLATES_HI), lang: "hi" }
-    : {
-        lines: titleFrom(id - Math.floor((id + 1) / 3), TEMPLATES),
-        lang: "en",
-      };
+/** Deterministic English title for book `id`. */
+const buildTitle = (id: number): string[] => titleFrom(id, TEMPLATES);
 
 const OPENERS = [
   "A soft-launch field guide to wanting more cherries",
@@ -422,7 +335,7 @@ const OPENERS = [
 ] as const;
 
 const MIDDLES = [
-  "collaged from captions Aru almost posted",
+  "collaged from captions almost posted then deleted",
   "told in bubble type and slightly unhinged confidence",
   "written like a story you'd screenshot and never reread",
   "traced through nine soft launches and one hard jam",
@@ -512,8 +425,8 @@ export const getBook = (id: number): Book => {
   const col = id % GRID_COLS;
   const row = Math.floor(id / GRID_COLS);
   const kind = ROW_KINDS[(col + row * 3) % GRID_COLS];
-  const { lines: titleLines, lang } = buildTitle(id);
-  const author = `ARU ${pick(rand, CHERRY_VARIETIES)}`;
+  const titleLines = buildTitle(id);
+  const author = pick(rand, CHERRY_VARIETIES);
   const year = 1995 + Math.floor(rand() * 32);
   const blurb = `${pick(rand, OPENERS)}, ${pick(rand, MIDDLES)}. ${pick(rand, CLOSERS)}`;
 
@@ -545,7 +458,6 @@ export const getBook = (id: number): Book => {
   const rotatedFit = titleMaxSize(
     rotatedMeasureRatio(width, height),
     titleLines.length,
-    lang,
   );
   const rotation: TitleRotation =
     rotatedFit < ROTATED_MIN_SIZE || rotationRoll < 0.6
@@ -563,7 +475,6 @@ export const getBook = (id: number): Book => {
 
   return {
     id,
-    lang,
     titleLines,
     title: titleLines.join(" "),
     author,

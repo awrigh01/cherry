@@ -114,7 +114,7 @@ export function BookCard({ book }: BookCardProps): React.ReactElement {
     rotationDeg === 0
       ? (book.height * 0.8) / book.width
       : rotatedMeasureRatio(book.width, book.height);
-  const maxSize = titleMaxSize(measureRatio, book.titleLines.length, book.lang);
+  const maxSize = titleMaxSize(measureRatio, book.titleLines.length);
 
   const titleBlock = (
     <div
@@ -126,7 +126,6 @@ export function BookCard({ book }: BookCardProps): React.ReactElement {
           text={line}
           fill={palette.fg}
           maxSize={maxSize}
-          lang={book.lang}
         />
       ))}
     </div>
