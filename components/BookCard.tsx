@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { Book, PieceKind } from "@/lib/books";
-import { FitLine, titleMaxSize } from "@/components/FitLine";
+import { FitLine } from "@/components/FitLine";
+import { rotatedMeasureRatio, titleMaxSize } from "@/lib/type";
 
 /** Physical thickness (px) of each piece kind's paper block. Every kind is
  * a proper book with a clearly visible page block, per the design. */
@@ -112,7 +113,7 @@ export function BookCard({ book }: BookCardProps): React.ReactElement {
   const measureRatio =
     rotationDeg === 0
       ? (book.height * 0.8) / book.width
-      : (book.width * 0.8) / (book.height * 0.86);
+      : rotatedMeasureRatio(book.width, book.height);
   const maxSize = titleMaxSize(measureRatio, book.titleLines.length);
 
   const titleBlock = (

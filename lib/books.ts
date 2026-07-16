@@ -6,6 +6,12 @@
  * re-derive the exact same book from the URL with no database.
  */
 
+import {
+  ROTATED_MIN_SIZE,
+  rotatedMeasureRatio,
+  titleMaxSize,
+} from "@/lib/type";
+
 /** Physical kind of printed piece, mirroring the reference photo. */
 export type PieceKind = "flyer" | "booklet" | "stack" | "thickBook" | "blank";
 
@@ -369,21 +375,36 @@ export const getBook = (id: number): Book => {
       : PALETTES[(col * 3 + row * 4) % PALETTES.length];
 
   const rotationRoll = rand();
-  const rotation: TitleRotation =
-    rotationRoll < 0.6 ? "upright" : rotationRoll < 0.85 ? "ccw" : "cw";
-
-  // Bleed only pairs with upright type: combined with a 90deg rotation it
-  // crops the title on every edge instead of one deliberate side.
-  const bleed =
-    (kind === "flyer" || kind === "booklet") &&
-    rotation === "upright" &&
-    rand() < 0.25;
+  const bleedRoll = rand();
   const base = sizeFor(col + row, kind);
   // Per-book scale wobble (+/-8%) so even same-variant pieces a few cells
   // apart don't read as identical sizes.
   const scale = 0.92 + rand() * 0.16;
   const width = Math.round(base.width * scale);
   const height = Math.round(base.height * scale);
+
+  // Rotated type sets its measure along the card's long axis but budgets its
+  // stack depth on the short one, so long titles on portrait cards clamp
+  // tiny and letter-space out into a gappy mess. Only rotate when the fitted
+  // size stays at display scale; otherwise the title runs upright, where
+  // measure and budget are proportioned correctly.
+  const rotatedFit = titleMaxSize(
+    rotatedMeasureRatio(width, height),
+    titleLines.length,
+  );
+  const rotation: TitleRotation =
+    rotatedFit < ROTATED_MIN_SIZE || rotationRoll < 0.6
+      ? "upright"
+      : rotationRoll < 0.85
+        ? "ccw"
+        : "cw";
+
+  // Bleed only pairs with upright type: combined with a 90deg rotation it
+  // crops the title on every edge instead of one deliberate side.
+  const bleed =
+    (kind === "flyer" || kind === "booklet") &&
+    rotation === "upright" &&
+    bleedRoll < 0.25;
 
   return {
     id,

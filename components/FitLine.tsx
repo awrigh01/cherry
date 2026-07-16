@@ -1,34 +1,7 @@
-/** Approximate average cap advance of Archivo Black, in em. */
-const CAP_ADVANCE = 0.68;
-/** Largest and smallest per-line font sizes (viewBox units, width = 100). */
-const MAX_SIZE = 34;
-const MIN_SIZE = 15;
-/** Line height per font-size unit (cap height 0.72 x 1.08 leading). */
-const LINE_RATIO = 0.72 * 1.08;
+import { CAP_ADVANCE, MAX_SIZE, MIN_SIZE, titleMaxSize } from "@/lib/type";
 
-/**
- * Largest per-line size that lets a stacked title fit its container.
- *
- * @param heightOverWidth - Container aspect as height / width
- * @param lineCount - Number of title lines
- * @param fraction - Share of the container height the title may occupy
- * @returns Max font size in FitLine viewBox units, clamped to sane bounds
- *
- * @example
- * ```typescript
- * const maxSize = titleMaxSize(300 / 215, 5)
- * ```
- */
-export const titleMaxSize = (
-  heightOverWidth: number,
-  lineCount: number,
-  fraction = 0.82,
-): number => {
-  const budget = heightOverWidth * 100 * fraction;
-  // No lower clamp here: fitting the container always wins over the
-  // preferred minimum size, otherwise many-line titles overflow the cover.
-  return Math.min(MAX_SIZE, budget / (lineCount * LINE_RATIO));
-};
+// Re-exported so existing imports of the fit math keep working.
+export { titleMaxSize };
 
 /**
  * Props for the FitLine component
