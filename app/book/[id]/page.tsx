@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getBook, type Book } from "@/lib/books";
+import { EscapeBack } from "@/components/EscapeBack";
 import { FitLine, titleMaxSize } from "@/components/FitLine";
 
 interface BookPageProps {
@@ -113,6 +114,7 @@ export default async function BookPage({
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-center overflow-hidden px-3 py-10 sm:px-6 sm:py-16">
+      <EscapeBack />
       <Link
         href="/"
         className="group fixed left-4 top-4 z-10 flex flex-col items-start text-ink sm:left-6 sm:top-6"
