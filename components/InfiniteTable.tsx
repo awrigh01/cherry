@@ -93,8 +93,14 @@ export function InfiniteTable(): React.ReactElement {
           </div>
         </div>
       </div>
-      {/* Invisible scroll track; grows with each appended batch */}
-      <div aria-hidden className="relative" style={{ height: rows * CELL_H }}>
+      {/* Invisible scroll track; grows with each appended batch.
+          pointer-events-none so it never intercepts clicks meant for the
+          fixed scene beneath it in the stacking order. */}
+      <div
+        aria-hidden
+        className="pointer-events-none relative"
+        style={{ height: rows * CELL_H }}
+      >
         <div ref={sentinelRef} className="absolute bottom-0 h-px w-px" />
       </div>
     </main>

@@ -62,9 +62,23 @@ export function BookCard({ book }: BookCardProps): React.ReactElement {
   const { palette } = book;
   const isSmallCard = book.height < 120;
   const thick = book.kind === "thickBook" || book.kind === "stack";
+  // Layered shadows like the photo: a tight contact shadow hugging the sheet,
+  // a mid falloff, and a wide soft ambient — all cast down-left (light source
+  // upper right). Thick pieces sit higher, so their ambient is larger.
   const shadow = thick
-    ? "-24px 30px 40px rgba(20, 20, 20, 0.24)"
-    : "-16px 20px 30px rgba(20, 20, 20, 0.18)";
+    ? [
+        "0 1px 2px rgba(20, 20, 20, 0.14)",
+        "-6px 8px 10px rgba(20, 20, 20, 0.12)",
+        "-20px 26px 42px rgba(20, 20, 20, 0.20)",
+      ].join(", ")
+    : [
+        "0 1px 2px rgba(20, 20, 20, 0.12)",
+        "-4px 5px 7px rgba(20, 20, 20, 0.10)",
+        "-10px 13px 22px rgba(20, 20, 20, 0.13)",
+      ].join(", ");
+  /** Grounding shadow for the bottom-most sheet of piles and thick books */
+  const baseShadow =
+    "0 1px 2px rgba(20, 20, 20, 0.10), -12px 15px 24px rgba(20, 20, 20, 0.16)";
   const rotationDeg =
     book.rotation === "ccw" ? -90 : book.rotation === "cw" ? 90 : 0;
   // Deterministic layout variation: center the type on some pieces,
@@ -102,6 +116,7 @@ export function BookCard({ book }: BookCardProps): React.ReactElement {
               background: palette.bg,
               transform: "translate(-10px, 12px)",
               filter: "brightness(0.9)",
+              boxShadow: baseShadow,
             }}
           />
           <div
@@ -118,7 +133,10 @@ export function BookCard({ book }: BookCardProps): React.ReactElement {
         <>
           <div
             className="absolute inset-0 bg-white"
-            style={{ transform: "translate(-9px, 10px)" }}
+            style={{
+              transform: "translate(-9px, 10px)",
+              boxShadow: baseShadow,
+            }}
           />
           <div
             className="absolute inset-0 border border-black/10 bg-white"
@@ -133,6 +151,7 @@ export function BookCard({ book }: BookCardProps): React.ReactElement {
             background: palette.bg,
             filter: "brightness(0.93)",
             transform: "translate(-4px, 5px)",
+            boxShadow: baseShadow,
           }}
         />
       )}
