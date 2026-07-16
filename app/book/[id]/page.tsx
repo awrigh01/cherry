@@ -51,8 +51,8 @@ interface CoverFaceProps {
 function CoverFace({ book }: CoverFaceProps): React.ReactElement {
   const { palette } = book;
   const lines = book.titleLines.length;
-  const desktopMax = titleMaxSize(7 / 5 / 1.09, lines);
-  const mobileMax = titleMaxSize(10 / 9 / 1.09, lines);
+  const desktopMax = titleMaxSize(7 / 5 / 1.09, lines, book.lang);
+  const mobileMax = titleMaxSize(10 / 9 / 1.09, lines, book.lang);
   return (
     <div
       className="book-face absolute inset-0 flex flex-col justify-center overflow-hidden px-[6%]"
@@ -65,6 +65,7 @@ function CoverFace({ book }: CoverFaceProps): React.ReactElement {
             text={line}
             fill={palette.fg}
             maxSize={mobileMax}
+            lang={book.lang}
           />
         ))}
       </div>
@@ -75,6 +76,7 @@ function CoverFace({ book }: CoverFaceProps): React.ReactElement {
             text={line}
             fill={palette.fg}
             maxSize={desktopMax}
+            lang={book.lang}
           />
         ))}
       </div>

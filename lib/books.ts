@@ -10,6 +10,7 @@ import {
   ROTATED_MIN_SIZE,
   rotatedMeasureRatio,
   titleMaxSize,
+  type TitleLang,
 } from "@/lib/type";
 
 /** Physical kind of printed piece, mirroring the reference photo. */
@@ -30,6 +31,8 @@ export interface Palette {
 export interface Book {
   /** Stable numeric id (also the URL segment) */
   id: number;
+  /** Script the cover title is set in */
+  lang: TitleLang;
   /** Cover title, one word per line */
   titleLines: string[];
   /** Title joined with spaces, for metadata and the spread page */
@@ -76,19 +79,19 @@ const pick = <T,>(rand: () => number, items: readonly T[]): T =>
 export const GRID_COLS = 10;
 
 /**
- * Color pairings sampled from the reference photo. Yellow, red, and white
- * appear twice for weighting; duplicates sit exactly 5 apart so the stride
- * walk below never lands the same palette on two touching books.
+ * Color pairings for the covers. Yellow appears twice for weighting; the
+ * duplicates sit exactly 5 apart so the stride walk below never lands the
+ * same palette on two touching books.
  */
 const PALETTES: readonly Palette[] = [
   { bg: "#f2e400", fg: "#141414" }, // yellow + black (most frequent)
-  { bg: "#e8391d", fg: "#f09ac0" }, // red + pink
-  { bg: "#ffffff", fg: "#e8391d" }, // white + red
+  { bg: "#ff6600", fg: "#ffa9d2" }, // bright orange + bright pink
+  { bg: "#ffffff", fg: "#d63c2e" }, // white + flat red
   { bg: "#0d8a3c", fg: "#141414" }, // kelly green + black
   { bg: "#e6007e", fg: "#ffffff" }, // magenta + white
   { bg: "#f2e400", fg: "#141414" },
-  { bg: "#e8391d", fg: "#f09ac0" },
-  { bg: "#ffffff", fg: "#e8391d" },
+  { bg: "#d63c2e", fg: "#ffa9d2" }, // flat red + bright pink
+  { bg: "#b9d4ea", fg: "#141414" }, // powder blue + black
   { bg: "#141414", fg: "#a8c6e8" }, // black + light blue
   { bg: "#b9a3e3", fg: "#141414" }, // lavender + black
 ];
@@ -229,6 +232,76 @@ const TEMPLATES: readonly TitleTemplate[] = [
   },
 ];
 
+/** Hindi word banks, split by grammatical gender so adjective templates
+ * agree (feminine forms pair with feminine nouns). */
+const HI_NOUNS_FEM = [
+  "चेरी", // cherry
+  "टोकरी", // basket
+  "डाली", // branch
+  "गुठली", // pit
+  "फ़सल", // harvest
+  "कहानी", // story
+] as const;
+
+const HI_NOUNS_MASC = [
+  "बाग़", // orchard
+  "पेड़", // tree
+  "मुरब्बा", // jam
+  "गीत", // song
+] as const;
+
+const HI_ADJECTIVES = [
+  "मीठी", // sweet
+  "खट्टी", // sour
+  "जंगली", // wild
+  "पकी", // ripe
+  "पहली", // first
+  "आख़िरी", // last
+  "लाल", // red
+  "काली", // dark
+] as const;
+
+const HI_VERBS = [
+  "खाओ", // eat
+  "तोड़ो", // pick
+  "बाँटो", // share
+  "चखो", // taste
+  "उगाओ", // grow
+  "बचाओ", // save
+] as const;
+
+/** Slogan-shaped Hindi templates, same Aru-and-cherries world. */
+const TEMPLATES_HI: readonly TitleTemplate[] = [
+  {
+    banks: [HI_ADJECTIVES, HI_NOUNS_FEM],
+    build: ([a, n]) => ["आरू", "और", a, n], // Aru and the sweet cherry
+  },
+  {
+    banks: [HI_ADJECTIVES],
+    build: ([a]) => [a, "चेरी", "का", "मौसम"], // season of ripe cherries
+  },
+  {
+    banks: [HI_NOUNS_MASC],
+    build: ([n]) => ["आरू", "का", n], // Aru's orchard
+  },
+  {
+    banks: [HI_ADJECTIVES, HI_NOUNS_FEM],
+    build: ([a, n]) => [a, n, "आरू", "के", "लिए"], // a sweet cherry for Aru
+  },
+  {
+    banks: [HI_NOUNS_FEM, HI_VERBS],
+    build: ([n, v]) => [n, v], // eat cherries
+  },
+  {
+    banks: [HI_VERBS, HI_VERBS],
+    build: ([a, b]) => [a, "और", shiftIfEqual(b, a, HI_VERBS)], // pick and share
+  },
+  {
+    banks: [HI_ADJECTIVES, HI_NOUNS_FEM],
+    build: ([a, n]) => ["हर", n, a, "है"], // every cherry is sweet
+  },
+];
+
 /** Decompose a combination index into one word per bank. */
 const slotValues = (
   idx: number,
@@ -243,20 +316,31 @@ const slotValues = (
   return words;
 };
 
-/**
- * Deterministic title for book `id`, with repeats pushed out as far as the
- * word banks allow. Templates cycle by id; within a template, draws walk the
- * full combination space with a stride coprime to its size, so a title can
- * only repeat after every combination (80 to 10,000 per template) is used.
- */
-const buildTitle = (id: number): string[] => {
-  const t = id % TEMPLATES.length;
-  const k = Math.floor(id / TEMPLATES.length);
-  const { banks, build } = TEMPLATES[t];
+/** Walk a template set deterministically: templates cycle by `key`; within
+ * a template, draws stride through the full combination space with a prime
+ * coprime to its size, pushing title repeats as far out as the banks allow. */
+const titleFrom = (
+  key: number,
+  templates: readonly TitleTemplate[],
+): string[] => {
+  const t = key % templates.length;
+  const k = Math.floor(key / templates.length);
+  const { banks, build } = templates[t];
   const total = banks.reduce((acc, bank) => acc * bank.length, 1);
   const stride = [37, 41, 43].find((p) => total % p !== 0) ?? 1;
   return build(slotValues((k * stride + t * 11) % total, banks));
 };
+
+/** Every 4th book gets a Hindi title; the rest are English. Each language
+ * walks its own template cycle (keys count only that language's books) so
+ * the mix stays deterministic and repeat-resistant. */
+const buildTitle = (id: number): { lines: string[]; lang: TitleLang } =>
+  id % 4 === 1
+    ? { lines: titleFrom(Math.floor(id / 4), TEMPLATES_HI), lang: "hi" }
+    : {
+        lines: titleFrom(id - Math.floor((id + 2) / 4), TEMPLATES),
+        lang: "en",
+      };
 
 const OPENERS = [
   "A field guide to cherry picking with Aru",
@@ -358,7 +442,7 @@ export const getBook = (id: number): Book => {
   const col = id % GRID_COLS;
   const row = Math.floor(id / GRID_COLS);
   const kind = ROW_KINDS[(col + row * 3) % GRID_COLS];
-  const titleLines = buildTitle(id);
+  const { lines: titleLines, lang } = buildTitle(id);
   const author = `ARU ${pick(rand, CHERRY_VARIETIES)}`;
   const year = 1995 + Math.floor(rand() * 32);
   const blurb = `${pick(rand, OPENERS)}, ${pick(rand, MIDDLES)}. ${pick(rand, CLOSERS)}`;
@@ -391,6 +475,7 @@ export const getBook = (id: number): Book => {
   const rotatedFit = titleMaxSize(
     rotatedMeasureRatio(width, height),
     titleLines.length,
+    lang,
   );
   const rotation: TitleRotation =
     rotatedFit < ROTATED_MIN_SIZE || rotationRoll < 0.6
@@ -408,6 +493,7 @@ export const getBook = (id: number): Book => {
 
   return {
     id,
+    lang,
     titleLines,
     title: titleLines.join(" "),
     author,
