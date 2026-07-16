@@ -18,3 +18,62 @@ body {
   color: var(--ink);
   font-family: var(--font-archivo), sans-serif;
 }
+
+/* --- Book-opening animation (detail page) --- */
+
+/* The front cover swings open around the spine with a small settle-bounce.
+   The translateZ keeps the cover a hair above the right page so the two
+   never z-fight while coplanar. */
+@keyframes book-open {
+  0% {
+    transform: translateZ(2px) rotateY(180deg);
+  }
+  72% {
+    transform: translateZ(2px) rotateY(-9deg);
+  }
+  100% {
+    transform: translateZ(2px) rotateY(0deg);
+  }
+}
+
+/* The whole book drops onto the table as it arrives */
+@keyframes book-settle {
+  from {
+    transform: translateY(30px) scale(1.04);
+  }
+  to {
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Right-page text appears once the cover has landed */
+@keyframes page-fade {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.book-settle {
+  animation: book-settle 0.7s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+
+.book-flipper {
+  animation: book-open 1.3s cubic-bezier(0.55, 0.05, 0.35, 1) 0.45s both;
+}
+
+.book-fade {
+  animation: page-fade 0.5s ease 1.45s both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .book-settle,
+  .book-flipper,
+  .book-fade {
+    animation: none;
+  }
+}

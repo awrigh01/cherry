@@ -1,12 +1,15 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getBook } from "@/lib/books";
+import { getBook, type Book } from "@/lib/books";
 import { FitLine } from "@/components/FitLine";
 
 interface BookPageProps {
   params: Promise<{ id: string }>;
 }
+
+const PAGE_SHADOW =
+  "0 1px 2px rgba(20, 20, 20, 0.12), -18px 26px 44px rgba(20, 20, 20, 0.22)";
 
 /** Parse and validate the numeric book id from the URL, or 404. */
 const parseId = (raw: string): number => {
@@ -27,19 +30,61 @@ export async function generateMetadata({
 }
 
 /**
- * BookPage - The book from the table, opened flat as a two-page spread.
+ * Props for the CoverFace component
+ */
+interface CoverFaceProps {
+  /** The book whose cover typography to render */
+  book: Book;
+  /** Extra transform applied to this face (used for the flipped back face) */
+  transform?: string;
+}
+
+/**
+ * CoverFace - One face of the flipping front cover: the book's palette,
+ * justified stacked-type title, and tiny corner captions.
+ */
+function CoverFace({ book, transform }: CoverFaceProps): React.ReactElement {
+  const { palette } = book;
+  return (
+    <div
+      className="absolute inset-0 flex flex-col justify-center px-[4%] [backface-visibility:hidden]"
+      style={{ background: palette.bg, boxShadow: PAGE_SHADOW, transform }}
+    >
+      <div>
+        {book.titleLines.map((line, index) => (
+          <FitLine key={`${line}-${index}`} text={line} fill={palette.fg} />
+        ))}
+      </div>
+      <span
+        className="font-display absolute left-[6%] top-[4%] text-[11px] leading-none"
+        style={{ color: palette.fg }}
+      >
+        CHERRY
+      </span>
+      <span
+        className="font-display absolute bottom-[4%] right-[6%] text-[11px] leading-none"
+        style={{ color: palette.fg }}
+      >
+        NYC
+      </span>
+    </div>
+  );
+}
+
+/**
+ * BookPage - The book from the table, opening itself into a two-page spread.
  *
- * Left page reproduces the cover typography in the book's palette; right
- * page is white paper with author, year, and blurb set like a program
- * booklet. A thin spine rule divides the pages. The spread lies on the same
- * gray tabletop with a slight perspective tilt.
+ * The book arrives closed (front cover lying on the right page), settles onto
+ * the table, then the cover swings 180 degrees open around the spine in 3D
+ * with a slight bounce, revealing the inside-left page. The right page's
+ * program-booklet text fades in once the cover lands. Pure CSS keyframes;
+ * honors prefers-reduced-motion.
  */
 export default async function BookPage({
   params,
 }: BookPageProps): Promise<React.ReactElement> {
   const { id } = await params;
   const book = getBook(parseId(id));
-  const { palette } = book;
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-center overflow-hidden px-6 py-16">
@@ -51,64 +96,48 @@ export default async function BookPage({
       </Link>
 
       <div style={{ perspective: "1600px" }}>
-        <div
-          className="flex"
-          style={{
-            transform: "rotateX(16deg)",
-            boxShadow: "-30px 44px 60px rgba(20, 20, 20, 0.28)",
-          }}
-        >
-          {/* Left page: the cover typography, opened flat */}
+        <div className="book-settle [transform-style:preserve-3d]">
           <div
-            className="relative flex w-[min(42vw,420px)] flex-col justify-center px-[4%] py-[6%]"
-            style={{ background: palette.bg, aspectRatio: "5 / 7" }}
+            className="flex [transform-style:preserve-3d]"
+            style={{ transform: "rotateX(16deg)" }}
           >
-            <div>
-              {book.titleLines.map((line, index) => (
-                <FitLine
-                  key={`${line}-${index}`}
-                  text={line}
-                  fill={palette.fg}
-                />
-              ))}
+            {/* Front cover / inside-left page, hinged at the spine */}
+            <div
+              className="book-flipper relative w-[min(42vw,420px)] origin-right [transform-style:preserve-3d]"
+              style={{ aspectRatio: "5 / 7" }}
+            >
+              {/* Inside-left face: visible once the book is open */}
+              <CoverFace book={book} />
+              {/* Front-cover face: visible while the book is still closed */}
+              <CoverFace book={book} transform="rotateY(180deg)" />
             </div>
-            <span
-              className="font-display absolute left-[6%] top-[4%] text-[11px] leading-none"
-              style={{ color: palette.fg }}
-            >
-              CHERRY
-            </span>
-            <span
-              className="font-display absolute bottom-[4%] right-[6%] text-[11px] leading-none"
-              style={{ color: palette.fg }}
-            >
-              NYC
-            </span>
-          </div>
 
-          {/* Spine */}
-          <div className="w-[3px] shrink-0 bg-black/25" />
+            {/* Spine */}
+            <div className="w-[3px] shrink-0 bg-black/25" />
 
-          {/* Right page: white paper with the program-booklet text */}
-          <div
-            className="relative flex w-[min(42vw,420px)] flex-col bg-white px-[5%] py-[7%]"
-            style={{ aspectRatio: "5 / 7" }}
-          >
-            <p className="font-display text-[15px] leading-tight">
-              {book.author}
-            </p>
-            <p className="mt-1 text-[12px] tracking-widest">{book.year}</p>
-            <hr className="my-5 border-t border-black/20" />
-            <p className="text-[14px] leading-relaxed">{book.blurb}</p>
-            <div className="mt-auto flex items-end justify-between">
-              <span className="font-display text-[11px] leading-none">
-                CHERRY
-                <span className="mx-[0.22em] inline-block h-[0.52em] w-[0.52em] bg-ink" />
-                NYC
-              </span>
-              <span className="text-[10px] tracking-widest">
-                NO. {String(book.id).padStart(4, "0")}
-              </span>
+            {/* Right page: white paper with the program-booklet text */}
+            <div
+              className="relative flex w-[min(42vw,420px)] flex-col bg-white px-[5%] py-[7%]"
+              style={{ aspectRatio: "5 / 7", boxShadow: PAGE_SHADOW }}
+            >
+              <div className="book-fade flex min-h-0 grow flex-col">
+                <p className="font-display text-[15px] leading-tight">
+                  {book.author}
+                </p>
+                <p className="mt-1 text-[12px] tracking-widest">{book.year}</p>
+                <hr className="my-5 border-t border-black/20" />
+                <p className="text-[14px] leading-relaxed">{book.blurb}</p>
+                <div className="mt-auto flex items-end justify-between">
+                  <span className="font-display text-[11px] leading-none">
+                    CHERRY
+                    <span className="mx-[0.22em] inline-block h-[0.52em] w-[0.52em] bg-ink" />
+                    NYC
+                  </span>
+                  <span className="text-[10px] tracking-widest">
+                    NO. {String(book.id).padStart(4, "0")}
+                  </span>
+                </div>
+              </div>
             </div>
           </div>
         </div>
