@@ -139,8 +139,12 @@ export default async function BookPage({
                 className="relative z-10 aspect-[9/10] w-[min(92vw,360px)] sm:aspect-[5/7] sm:w-[min(42vw,420px)]"
                 style={{ perspective: "1600px" }}
               >
-                {/* Shadow + page-block edges the cover lands on */}
+                {/* Shadow + page-block edges the cover lands on. The two
+                    shadow layers cross-fade (airborne soft -> landed hard)
+                    so no box-shadow value ever animates. */}
                 <div className="book-ground-shadow absolute inset-0">
+                  <div className="book-shadow-soft" />
+                  <div className="book-shadow-hard" />
                   <div className="absolute -bottom-[5px] left-[6px] right-0 hidden h-[5px] bg-[#eceae4] sm:block" />
                   <div className="absolute -bottom-[10px] left-[13px] right-0 hidden h-[5px] bg-[#e2dfd7] sm:block" />
                 </div>
