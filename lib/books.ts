@@ -284,22 +284,28 @@ interface SizeVariant {
   height: number;
 }
 
-/** Size variants per piece kind (px on the table plane). */
-const sizeFor = (rand: () => number, kind: PieceKind): SizeVariant => {
+/**
+ * Size variants per piece kind (px on the table plane), chosen by grid
+ * position rather than randomly: `variant` advances with both column and
+ * row, so neighboring pieces of the same kind always land on different
+ * shapes.
+ */
+const sizeFor = (variant: number, kind: PieceKind): SizeVariant => {
+  const of = <T,>(items: readonly T[]): T => items[variant % items.length];
   switch (kind) {
     case "flyer":
-      return pick(rand, [
+      return of([
         { width: 215, height: 300 }, // portrait flyer
         { width: 255, height: 182 }, // landscape flyer
         { width: 178, height: 305 }, // tall narrow flyer
       ] as const);
     case "booklet":
-      return pick(rand, [
+      return of([
         { width: 228, height: 320 },
         { width: 208, height: 277 },
       ] as const);
     case "stack":
-      return pick(rand, [
+      return of([
         { width: 212, height: 273 }, // letterhead pile
         { width: 156, height: 92 }, // business cards
       ] as const);
@@ -372,7 +378,12 @@ export const getBook = (id: number): Book => {
     (kind === "flyer" || kind === "booklet") &&
     rotation === "upright" &&
     rand() < 0.25;
-  const { width, height } = sizeFor(rand, kind);
+  const base = sizeFor(col + row, kind);
+  // Per-book scale wobble (+/-8%) so even same-variant pieces a few cells
+  // apart don't read as identical sizes.
+  const scale = 0.92 + rand() * 0.16;
+  const width = Math.round(base.width * scale);
+  const height = Math.round(base.height * scale);
 
   return {
     id,
