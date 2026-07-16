@@ -4,9 +4,11 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { getBooks } from "@/lib/books";
 import { BookCard } from "@/components/BookCard";
 
+// Cells must exceed the largest piece (272x362) plus +/-30px jitter so
+// neighbors can never overlap.
 const COLS = 10;
-const CELL_W = 350;
-const CELL_H = 380;
+const CELL_W = 385;
+const CELL_H = 465;
 const PLANE_W = COLS * CELL_W;
 /** Local-plane distance the grid extends above the pivot at scroll 0 */
 const PLANE_TOP = -2300;

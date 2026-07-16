@@ -124,26 +124,125 @@ const CHERRY_VARIETIES = [
   "REGINA",
 ] as const;
 
+const ADJECTIVES = [
+  "SWEET",
+  "SOUR",
+  "WILD",
+  "RIPE",
+  "DARK",
+  "STOLEN",
+  "SECRET",
+  "LAST",
+  "FIRST",
+  "PERFECT",
+] as const;
+
+const TIMES = [
+  "MIDNIGHT",
+  "DAWN",
+  "NOON",
+  "DUSK",
+  "SUNRISE",
+  "SUPPER",
+  "HARVEST",
+  "MIDSUMMER",
+] as const;
+
+/** If two slot words collide, replace the second with its bank neighbor. */
+const shiftIfEqual = (
+  value: string,
+  other: string,
+  bank: readonly string[],
+): string =>
+  value === other ? bank[(bank.indexOf(value) + 1) % bank.length] : value;
+
+interface TitleTemplate {
+  /** Word banks feeding this template's slots, in order */
+  banks: readonly (readonly string[])[];
+  /** Assemble the title lines from the drawn slot words */
+  build: (words: string[]) => string[];
+}
+
 /** Slogan-shaped title templates, all about Aru and cherries. */
-const buildTitle = (rand: () => number): string[] => {
-  const n = (): string => pick(rand, NOUNS);
-  const v = (): string => pick(rand, VERBS);
-  const templates: readonly (() => string[])[] = [
-    () => ["ARU", "EATS", "EVERY", "CHERRY"],
-    () => ["OUR", n(), "IS", "YOUR", n()],
-    () => ["SEE", "ARU", "AT", "THE", n()],
-    () => ["FROM", "THE", "ORCHARD", "FOR", "ARU"],
-    () => [v(), v(), v(), v()],
-    () => ["THE", "PIT", "IS", "NOT", "THE", "END"],
-    () => ["ARU", "LOVES", "CHERRIES"],
-    () => ["ARU", "AND", "THE", n()],
-    () => ["WE", "SAVED", "A", n(), "FOR", "ARU"],
-    () => ["THIS", "IS", "ARU", "SEASON"],
-    () => [n(), "AFTER", n()],
-    () => ["A", "CHERRY", "FOR", "EVERY", "ARU"],
-    () => ["CHERRIES", "AT", "MIDNIGHT"],
-  ];
-  return pick(rand, templates)();
+const TEMPLATES: readonly TitleTemplate[] = [
+  { banks: [ADJECTIVES, NOUNS], build: (w) => ["ARU", "EATS", "EVERY", ...w] },
+  {
+    banks: [NOUNS, NOUNS],
+    build: ([x, y]) => ["OUR", x, "IS", "YOUR", shiftIfEqual(y, x, NOUNS)],
+  },
+  {
+    banks: [ADJECTIVES, NOUNS],
+    build: (w) => ["SEE", "ARU", "AT", "THE", ...w],
+  },
+  {
+    banks: [ADJECTIVES, NOUNS],
+    build: ([a, n]) => ["FROM", "THE", a, n, "FOR", "ARU"],
+  },
+  {
+    banks: [VERBS, VERBS, VERBS, VERBS],
+    build: ([a, b, c, d]) => {
+      const second = shiftIfEqual(b, a, VERBS);
+      const third = shiftIfEqual(c, second, VERBS);
+      return [a, second, third, shiftIfEqual(d, third, VERBS)];
+    },
+  },
+  {
+    banks: [NOUNS, NOUNS],
+    build: ([x, y]) => ["NO", x, "NO", shiftIfEqual(y, x, NOUNS)],
+  },
+  { banks: [ADJECTIVES, NOUNS], build: (w) => ["ARU", "LOVES", ...w] },
+  { banks: [ADJECTIVES, NOUNS], build: (w) => ["ARU", "AND", "THE", ...w] },
+  { banks: [ADJECTIVES, NOUNS], build: (w) => ["ARU", "SAVED", "THE", ...w] },
+  {
+    banks: [ADJECTIVES, NOUNS],
+    build: ([a, n]) => ["THIS", "IS", a, n, "SEASON"],
+  },
+  {
+    banks: [NOUNS, NOUNS],
+    build: ([x, y]) => [x, "AFTER", shiftIfEqual(y, x, NOUNS)],
+  },
+  {
+    banks: [ADJECTIVES, NOUNS],
+    build: ([a, n]) => ["A", a, n, "FOR", "ARU"],
+  },
+  {
+    banks: [ADJECTIVES, TIMES],
+    build: ([a, t]) => [a, "CHERRIES", "AT", t],
+  },
+  { banks: [ADJECTIVES, NOUNS], build: (w) => ["THE", ...w, "CLUB"] },
+  {
+    banks: [VERBS, TIMES],
+    build: ([v, t]) => ["ARU", `${v}S`, "AT", t],
+  },
+];
+
+/** Decompose a combination index into one word per bank. */
+const slotValues = (
+  idx: number,
+  banks: readonly (readonly string[])[],
+): string[] => {
+  const words: string[] = [];
+  let rest = idx;
+  for (const bank of banks) {
+    words.push(bank[rest % bank.length]);
+    rest = Math.floor(rest / bank.length);
+  }
+  return words;
+};
+
+/**
+ * Deterministic title for book `id`, with repeats pushed out as far as the
+ * word banks allow. Templates cycle by id; within a template, draws walk the
+ * full combination space with a stride coprime to its size, so a title can
+ * only repeat after every combination (80 to 10,000 per template) is used.
+ */
+const buildTitle = (id: number): string[] => {
+  const t = id % TEMPLATES.length;
+  const k = Math.floor(id / TEMPLATES.length);
+  const { banks, build } = TEMPLATES[t];
+  const total = banks.reduce((acc, bank) => acc * bank.length, 1);
+  const stride = [37, 41, 43].find((p) => total % p !== 0) ?? 1;
+  return build(slotValues((k * stride + t * 11) % total, banks));
 };
 
 const OPENERS = [
@@ -233,7 +332,7 @@ const KINDS: readonly PieceKind[] = [
 export const getBook = (id: number): Book => {
   const rand = mulberry32((id + 1) * 0x9e3779b9);
   const kind = pick(rand, KINDS);
-  const titleLines = buildTitle(rand);
+  const titleLines = buildTitle(id);
   const author = `ARU ${pick(rand, CHERRY_VARIETIES)}`;
   const year = 1995 + Math.floor(rand() * 32);
   const blurb = `${pick(rand, OPENERS)}, ${pick(rand, MIDDLES)}. ${pick(rand, CLOSERS)}`;
@@ -251,7 +350,12 @@ export const getBook = (id: number): Book => {
   const rotation: TitleRotation =
     rotationRoll < 0.6 ? "upright" : rotationRoll < 0.85 ? "ccw" : "cw";
 
-  const bleed = (kind === "flyer" || kind === "booklet") && rand() < 0.25;
+  // Bleed only pairs with upright type: combined with a 90deg rotation it
+  // crops the title on every edge instead of one deliberate side.
+  const bleed =
+    (kind === "flyer" || kind === "booklet") &&
+    rotation === "upright" &&
+    rand() < 0.25;
   const { width, height } = sizeFor(rand, kind);
 
   return {
