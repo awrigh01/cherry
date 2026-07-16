@@ -23,7 +23,8 @@ body {
 
 /* The front cover swings open around the spine with a small settle-bounce.
    The translateZ keeps the cover a hair above the right page so the two
-   never z-fight while coplanar. */
+   never z-fight while coplanar. Desktop opens sideways (vertical spine);
+   mobile stacks the pages and opens upward (horizontal spine). */
 @keyframes book-open {
   0% {
     transform: translateZ(2px) rotateY(180deg);
@@ -33,6 +34,18 @@ body {
   }
   100% {
     transform: translateZ(2px) rotateY(0deg);
+  }
+}
+
+@keyframes book-open-up {
+  0% {
+    transform: translateZ(2px) rotateX(-180deg);
+  }
+  72% {
+    transform: translateZ(2px) rotateX(9deg);
+  }
+  100% {
+    transform: translateZ(2px) rotateX(0deg);
   }
 }
 
@@ -63,7 +76,25 @@ body {
 }
 
 .book-flipper {
-  animation: book-open 1.3s cubic-bezier(0.55, 0.05, 0.35, 1) 0.45s both;
+  animation: book-open-up 1.3s cubic-bezier(0.55, 0.05, 0.35, 1) 0.45s both;
+  transform-origin: center bottom;
+}
+
+/* Cover face starts flipped over relative to the inside face; the flip axis
+   must match the hinge axis at each breakpoint. */
+.book-face-cover {
+  transform: rotateX(180deg);
+}
+
+@media (min-width: 640px) {
+  .book-flipper {
+    animation-name: book-open;
+    transform-origin: right center;
+  }
+
+  .book-face-cover {
+    transform: rotateY(180deg);
+  }
 }
 
 .book-fade {

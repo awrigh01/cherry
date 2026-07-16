@@ -30,18 +30,33 @@ const BATCH = 60;
  */
 export function InfiniteTable(): React.ReactElement {
   const [count, setCount] = useState(INITIAL_COUNT);
+  const [scale, setScale] = useState(1);
   const pivotRef = useRef<HTMLDivElement | null>(null);
   const sentinelRef = useRef<HTMLDivElement | null>(null);
+  const scaleRef = useRef(1);
 
   useEffect(() => {
+    // Uniform 3D scale shrinks the whole table (thickness included) on small
+    // screens; scroll translation is divided back out so one scrolled pixel
+    // still pans roughly one screen pixel.
     const apply = (): void => {
       if (pivotRef.current) {
-        pivotRef.current.style.transform = `rotateX(52deg) rotateZ(-32deg) translate3d(0, ${-window.scrollY}px, 0)`;
+        const s = scaleRef.current;
+        pivotRef.current.style.transform = `scale3d(${s}, ${s}, ${s}) rotateX(52deg) rotateZ(-32deg) translate3d(0, ${-window.scrollY / s}px, 0)`;
       }
     };
-    apply();
+    const onResize = (): void => {
+      scaleRef.current = window.innerWidth < 640 ? 0.62 : 1;
+      setScale(scaleRef.current);
+      apply();
+    };
+    onResize();
     window.addEventListener("scroll", apply, { passive: true });
-    return () => window.removeEventListener("scroll", apply);
+    window.addEventListener("resize", onResize);
+    return () => {
+      window.removeEventListener("scroll", apply);
+      window.removeEventListener("resize", onResize);
+    };
   }, []);
 
   useEffect(() => {
@@ -102,7 +117,7 @@ export function InfiniteTable(): React.ReactElement {
       <div
         aria-hidden
         className="pointer-events-none relative"
-        style={{ height: rows * CELL_H }}
+        style={{ height: rows * CELL_H * scale }}
       >
         <div ref={sentinelRef} className="absolute bottom-0 h-px w-px" />
       </div>

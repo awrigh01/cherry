@@ -81,114 +81,96 @@ const PALETTES: readonly Palette[] = [
 ];
 
 const NOUNS = [
-  "STAGE",
-  "PAGE",
-  "STORY",
-  "INK",
-  "PAPER",
-  "SPINE",
-  "PLOT",
-  "CHAPTER",
-  "MARGIN",
-  "COVER",
-  "SHELF",
-  "WORD",
-  "BOOK",
-  "LIBRARY",
-  "READER",
+  "CHERRY",
+  "ORCHARD",
+  "PIT",
+  "STEM",
+  "BLOSSOM",
+  "JAM",
+  "PIE",
+  "TREE",
+  "BASKET",
+  "HARVEST",
+  "GROVE",
+  "PICNIC",
 ] as const;
 
 const VERBS = [
-  "READ",
-  "WRITE",
-  "LISTEN",
-  "GATHER",
-  "SING",
+  "PICK",
+  "TASTE",
+  "PLANT",
   "SHARE",
+  "CLIMB",
   "DREAM",
-  "LEARN",
-  "LOVE",
-  "BEGIN",
-  "LAUGH",
+  "SNACK",
   "WANDER",
+  "SAVOR",
+  "GATHER",
 ] as const;
 
-const FIRST_NAMES = [
-  "ADA",
-  "MILO",
-  "JUNE",
-  "OTTO",
-  "VERA",
-  "LENA",
-  "HUGO",
-  "IRIS",
-  "EZRA",
-  "NOOR",
-  "KAI",
-  "RUTH",
+/** Every book is authored by an Aru; surnames are cherry varieties. */
+const CHERRY_VARIETIES = [
+  "BING",
+  "RAINIER",
+  "MORELLO",
+  "LAMBERT",
+  "MONTMORENCY",
+  "AMARENA",
+  "SKEENA",
+  "LAPINS",
+  "STELLA",
+  "CHELAN",
+  "TIETON",
+  "REGINA",
 ] as const;
 
-const LAST_NAMES = [
-  "MARCH",
-  "BELL",
-  "CALLOWAY",
-  "OKAFOR",
-  "LINDGREN",
-  "VOSS",
-  "TANAKA",
-  "MERCER",
-  "ADEYEMI",
-  "HOLT",
-  "NAKAMURA",
-  "FINCH",
-] as const;
-
-/** Slogan-shaped title templates in the spirit of the reference photo. */
+/** Slogan-shaped title templates, all about Aru and cherries. */
 const buildTitle = (rand: () => number): string[] => {
   const n = (): string => pick(rand, NOUNS);
   const v = (): string => pick(rand, VERBS);
   const templates: readonly (() => string[])[] = [
+    () => ["ARU", "EATS", "EVERY", "CHERRY"],
     () => ["OUR", n(), "IS", "YOUR", n()],
-    () => ["SEE", "YOU", "AT", "THE", n()],
-    () => ["FROM", "THE", n(), "FOR", "THE", "WORLD"],
+    () => ["SEE", "ARU", "AT", "THE", n()],
+    () => ["FROM", "THE", "ORCHARD", "FOR", "ARU"],
     () => [v(), v(), v(), v()],
-    () => ["THE", n(), "IS", "NOT", "DEAD"],
-    () => [v(), "IT", "TWICE"],
-    () => ["EVERY", n(), "A", "DOOR"],
-    () => ["WE", "SAVED", "A", n(), "FOR", "YOU"],
-    () => ["THIS", "IS", "YOUR", n()],
+    () => ["THE", "PIT", "IS", "NOT", "THE", "END"],
+    () => ["ARU", "LOVES", "CHERRIES"],
+    () => ["ARU", "AND", "THE", n()],
+    () => ["WE", "SAVED", "A", n(), "FOR", "ARU"],
+    () => ["THIS", "IS", "ARU", "SEASON"],
     () => [n(), "AFTER", n()],
-    () => ["A", n(), "FOR", "EVERY", "ONE"],
-    () => [v(), "AND", v()],
+    () => ["A", "CHERRY", "FOR", "EVERY", "ARU"],
+    () => ["CHERRIES", "AT", "MIDNIGHT"],
   ];
   return pick(rand, templates)();
 };
 
 const OPENERS = [
-  "A field guide to reading in public",
-  "Part manifesto, part love letter to print",
-  "An unhurried walk through the stacks",
-  "A pocket history of borrowed books",
-  "A loud argument for quiet rooms",
-  "Notes collected from a thousand margins",
+  "A field guide to cherry picking with Aru",
+  "Part manifesto, part love letter to the orchard",
+  "The true story of Aru and one impossible cherry tree",
+  "An unhurried walk through the grove with Aru",
+  "Notes collected from the bottom of Aru's cherry basket",
+  "A loud argument for cherries at breakfast",
 ] as const;
 
 const MIDDLES = [
-  "set across one long summer of library fines and folded corners",
-  "told in dog-eared chapters and pencil underlines",
-  "written on the backs of overdue slips",
-  "assembled from index cards found in a secondhand atlas",
-  "traced through nine cities and one impossible bookshop",
-  "recorded between the last page and the bus stop",
+  "set across one long summer of stained fingers and spat pits",
+  "told in dog-eared chapters and cherry-stem bookmarks",
+  "written on the backs of jam-jar labels",
+  "traced through nine orchards and one impossible pie contest",
+  "recorded between the last blossom and the first frost",
+  "assembled from postcards Aru never mailed",
 ] as const;
 
 const CLOSERS = [
-  "It asks only that you read it twice.",
-  "Bring a pencil. You will want to underline.",
-  "The ending is different every time you arrive at it.",
-  "Best read aloud, ideally to a stranger.",
-  "It was never supposed to leave the shelf.",
-  "Every copy is the first edition of someone.",
+  "Aru asks only that you save the last cherry.",
+  "Bring napkins. You will need them.",
+  "The pie is different every time you arrive at it.",
+  "Best read aloud under a cherry tree.",
+  "It was never supposed to leave the orchard.",
+  "Every cherry is the first cherry of someone.",
 ] as const;
 
 interface SizeVariant {
@@ -252,7 +234,7 @@ export const getBook = (id: number): Book => {
   const rand = mulberry32((id + 1) * 0x9e3779b9);
   const kind = pick(rand, KINDS);
   const titleLines = buildTitle(rand);
-  const author = `${pick(rand, FIRST_NAMES)} ${pick(rand, LAST_NAMES)}`;
+  const author = `ARU ${pick(rand, CHERRY_VARIETIES)}`;
   const year = 1995 + Math.floor(rand() * 32);
   const blurb = `${pick(rand, OPENERS)}, ${pick(rand, MIDDLES)}. ${pick(rand, CLOSERS)}`;
 

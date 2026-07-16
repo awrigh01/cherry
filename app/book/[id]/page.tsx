@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getBook, type Book } from "@/lib/books";
-import { FitLine } from "@/components/FitLine";
+import { FitLine, titleMaxSize } from "@/components/FitLine";
 
 interface BookPageProps {
   params: Promise<{ id: string }>;
@@ -35,24 +35,30 @@ export async function generateMetadata({
 interface CoverFaceProps {
   /** The book whose cover typography to render */
   book: Book;
-  /** Extra transform applied to this face (used for the flipped back face) */
-  transform?: string;
+  /** Extra class for this face (the cover back-face flips per breakpoint) */
+  className?: string;
 }
 
 /**
  * CoverFace - One face of the flipping front cover: the book's palette,
  * justified stacked-type title, and tiny corner captions.
  */
-function CoverFace({ book, transform }: CoverFaceProps): React.ReactElement {
+function CoverFace({ book, className }: CoverFaceProps): React.ReactElement {
   const { palette } = book;
+  const maxSize = titleMaxSize(7 / 5 / 1.09, book.titleLines.length);
   return (
     <div
-      className="absolute inset-0 flex flex-col justify-center px-[4%] [backface-visibility:hidden]"
-      style={{ background: palette.bg, boxShadow: PAGE_SHADOW, transform }}
+      className={`absolute inset-0 flex flex-col justify-center px-[4%] [backface-visibility:hidden] ${className ?? ""}`}
+      style={{ background: palette.bg, boxShadow: PAGE_SHADOW }}
     >
       <div>
         {book.titleLines.map((line, index) => (
-          <FitLine key={`${line}-${index}`} text={line} fill={palette.fg} />
+          <FitLine
+            key={`${line}-${index}`}
+            text={line}
+            fill={palette.fg}
+            maxSize={maxSize}
+          />
         ))}
       </div>
       <span
@@ -98,26 +104,27 @@ export default async function BookPage({
       <div style={{ perspective: "1600px" }}>
         <div className="book-settle [transform-style:preserve-3d]">
           <div
-            className="flex [transform-style:preserve-3d]"
+            className="flex flex-col sm:flex-row [transform-style:preserve-3d]"
             style={{ transform: "rotateX(16deg)" }}
           >
-            {/* Front cover / inside-left page, hinged at the spine */}
+            {/* Front cover / inside page, hinged at the spine
+                (bottom edge on mobile, right edge on larger screens) */}
             <div
-              className="book-flipper relative w-[min(42vw,420px)] origin-right [transform-style:preserve-3d]"
+              className="book-flipper relative w-[min(66vw,300px)] sm:w-[min(42vw,420px)] [transform-style:preserve-3d]"
               style={{ aspectRatio: "5 / 7" }}
             >
-              {/* Inside-left face: visible once the book is open */}
+              {/* Inside face: visible once the book is open */}
               <CoverFace book={book} />
               {/* Front-cover face: visible while the book is still closed */}
-              <CoverFace book={book} transform="rotateY(180deg)" />
+              <CoverFace book={book} className="book-face-cover" />
             </div>
 
             {/* Spine */}
-            <div className="w-[3px] shrink-0 bg-black/25" />
+            <div className="h-[3px] w-full shrink-0 bg-black/25 sm:h-auto sm:w-[3px]" />
 
-            {/* Right page: white paper with the program-booklet text */}
+            {/* Text page: white paper with the program-booklet copy */}
             <div
-              className="relative flex w-[min(42vw,420px)] flex-col bg-white px-[5%] py-[7%]"
+              className="relative flex w-[min(66vw,300px)] flex-col bg-white px-[5%] py-[7%] sm:w-[min(42vw,420px)]"
               style={{ aspectRatio: "5 / 7", boxShadow: PAGE_SHADOW }}
             >
               <div className="book-fade flex min-h-0 grow flex-col">

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { Book, PieceKind } from "@/lib/books";
-import { FitLine } from "@/components/FitLine";
+import { FitLine, titleMaxSize } from "@/components/FitLine";
 
 /** Physical thickness (px) of each piece kind's paper block. */
 const THICKNESS: Record<PieceKind, number> = {
@@ -109,12 +109,25 @@ export function BookCard({ book }: BookCardProps): React.ReactElement {
   // start it at the top (below the caption) on others.
   const centered = book.jitterX >= 0;
 
+  // Size the stacked title so every line fits the cover, whether the type
+  // runs upright (measure = card width) or rotated 90deg (measure = height).
+  const measureRatio =
+    rotationDeg === 0
+      ? (book.height * 0.8) / book.width
+      : (book.width * 0.8) / (book.height * 0.86);
+  const maxSize = titleMaxSize(measureRatio, book.titleLines.length);
+
   const titleBlock = (
     <div
       className={book.bleed ? "relative -ml-[9%] w-[118%]" : "relative w-full"}
     >
       {book.titleLines.map((line, index) => (
-        <FitLine key={`${line}-${index}`} text={line} fill={palette.fg} />
+        <FitLine
+          key={`${line}-${index}`}
+          text={line}
+          fill={palette.fg}
+          maxSize={maxSize}
+        />
       ))}
     </div>
   );
