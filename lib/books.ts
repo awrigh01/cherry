@@ -79,10 +79,10 @@ const pick = <T,>(rand: () => number, items: readonly T[]): T =>
 export const GRID_COLS = 10;
 
 /**
- * Color pairings for the covers. Yellow appears twice for weighting; with 12
- * entries and the (3, 4) grid strides below, touching cells only ever differ
- * by {1, 3, 4, 5, 7, 8, 9, 11} mod 12, so the yellow duplicates 6 apart can
- * never land on two touching books.
+ * Color pairings for the covers. Yellow and orange each appear twice for
+ * weighting; with 12 entries and the (3, 4) grid strides below, touching
+ * cells only ever differ by {1, 3, 4, 5, 7, 8, 9, 11} mod 12, so duplicates
+ * placed 6 apart can never land on two touching books.
  */
 const PALETTES: readonly Palette[] = [
   { bg: "#f2e400", fg: "#141414" }, // yellow + black (most frequent)
@@ -92,7 +92,7 @@ const PALETTES: readonly Palette[] = [
   { bg: "#0d8a3c", fg: "#141414" }, // kelly green + black
   { bg: "#e6007e", fg: "#ffffff" }, // magenta + white
   { bg: "#f2e400", fg: "#141414" },
-  { bg: "#d63c2e", fg: "#ffa9d2" }, // flat red + bright pink
+  { bg: "#ff6600", fg: "#f2e400" }, // bright orange + yellow
   { bg: "#b9d4ea", fg: "#141414" }, // powder blue + black
   { bg: "#e30613", fg: "#ffffff" }, // primary red + white
   { bg: "#141414", fg: "#a8c6e8" }, // black + light blue
