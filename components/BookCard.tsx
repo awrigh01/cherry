@@ -2,13 +2,14 @@ import Link from "next/link";
 import type { Book, PieceKind } from "@/lib/books";
 import { FitLine, titleMaxSize } from "@/components/FitLine";
 
-/** Physical thickness (px) of each piece kind's paper block. */
+/** Physical thickness (px) of each piece kind's paper block. Every kind is
+ * a proper book with a clearly visible page block, per the design. */
 const THICKNESS: Record<PieceKind, number> = {
-  flyer: 3,
-  booklet: 6,
-  stack: 16,
-  thickBook: 26,
-  blank: 14,
+  flyer: 14,
+  booklet: 17,
+  stack: 20,
+  thickBook: 30,
+  blank: 16,
 };
 
 /** Warm paper-white for the page-block edges of piles and books. */
@@ -92,13 +93,10 @@ export function BookCard({ book }: BookCardProps): React.ReactElement {
   const { palette } = book;
   const isSmallCard = book.height < 120;
   const t = THICKNESS[book.kind];
-  const paperBlock = book.kind !== "flyer" && book.kind !== "booklet";
-  // Page-block pieces show white paper edges; folded/single sheets show a
-  // thin darker slice of their own color.
-  const leftEdgeColor = paperBlock ? PAGE_EDGE : darken(palette.bg, 0.8);
-  const bottomEdgeColor = paperBlock
-    ? darken(PAGE_EDGE, 0.88)
-    : darken(palette.bg, 0.66);
+  // Every piece shows a white paper page block under its cover; the bottom
+  // edge sits in shadow so it reads a touch darker.
+  const leftEdgeColor = PAGE_EDGE;
+  const bottomEdgeColor = darken(PAGE_EDGE, 0.88);
   const shadow = [
     "0 1px 2px rgba(20, 20, 20, 0.14)",
     `${-4 - t}px ${5 + t}px ${12 + t * 1.5}px rgba(20, 20, 20, 0.18)`,
