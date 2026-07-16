@@ -79,22 +79,29 @@ const pick = <T,>(rand: () => number, items: readonly T[]): T =>
 export const GRID_COLS = 10;
 
 /**
- * Color pairings for the covers. Yellow appears twice for weighting; the
- * duplicates sit exactly 5 apart so the stride walk below never lands the
- * same palette on two touching books.
+ * Color pairings for the covers. Yellow appears twice for weighting; with 12
+ * entries and the (3, 4) grid strides below, touching cells only ever differ
+ * by {1, 3, 4, 5, 7, 8, 9, 11} mod 12, so the yellow duplicates 6 apart can
+ * never land on two touching books.
  */
 const PALETTES: readonly Palette[] = [
   { bg: "#f2e400", fg: "#141414" }, // yellow + black (most frequent)
   { bg: "#ff6600", fg: "#ffa9d2" }, // bright orange + bright pink
   { bg: "#ffffff", fg: "#d63c2e" }, // white + flat red
+  { bg: "#0051ff", fg: "#ffffff" }, // primary blue + white
   { bg: "#0d8a3c", fg: "#141414" }, // kelly green + black
   { bg: "#e6007e", fg: "#ffffff" }, // magenta + white
   { bg: "#f2e400", fg: "#141414" },
   { bg: "#d63c2e", fg: "#ffa9d2" }, // flat red + bright pink
   { bg: "#b9d4ea", fg: "#141414" }, // powder blue + black
+  { bg: "#e30613", fg: "#ffffff" }, // primary red + white
   { bg: "#141414", fg: "#a8c6e8" }, // black + light blue
   { bg: "#b9a3e3", fg: "#141414" }, // lavender + black
 ];
+
+/** Rows in the opening view (both breakpoints, plus early drift) where black
+ * covers are excluded so the ink masthead always reads against the table. */
+const MASTHEAD_ROWS = 15;
 
 const NOUNS = [
   "CHERRY",
@@ -456,13 +463,23 @@ export const getBook = (id: number): Book => {
   // Palettes walk the grid with strides (3 across, 4 down) chosen so no two
   // touching books — horizontally, vertically, or diagonally — share one.
   // Blank pieces are the near-empty letterhead / business-card wordmark ones.
-  const palette: Palette =
+  // Within the masthead rows, black covers swap 6 palette slots ahead (a
+  // spacing no two touching cells can have, so the swap can't create an
+  // adjacent duplicate) and blank cards stay white.
+  const paletteIndex = (col * 3 + row * 4) % PALETTES.length;
+  let palette: Palette =
     kind === "blank"
       ? pick(rand, [
           { bg: "#ffffff", fg: "#141414" },
           { bg: "#141414", fg: "#ffffff" },
         ] as const)
-      : PALETTES[(col * 3 + row * 4) % PALETTES.length];
+      : PALETTES[paletteIndex];
+  if (row < MASTHEAD_ROWS && palette.bg === "#141414") {
+    palette =
+      kind === "blank"
+        ? { bg: "#ffffff", fg: "#141414" }
+        : PALETTES[(paletteIndex + 6) % PALETTES.length];
+  }
 
   const rotationRoll = rand();
   const bleedRoll = rand();
