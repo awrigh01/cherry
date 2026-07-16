@@ -44,23 +44,37 @@ interface CoverFaceProps {
  * CoverFace - The flipping front cover's single face: the book's palette,
  * justified stacked-type title, and tiny corner captions. While the cover's
  * back is toward the camera, the `face-unmirror` animation pre-mirrors the
- * content so it reads as the front cover (see globals.css).
+ * content so it reads as the front cover (see globals.css). The title stack
+ * is rendered twice with different size budgets, because the mobile page is
+ * squarer (9/10) than the desktop 5/7 and long titles would overflow it.
  */
 function CoverFace({ book }: CoverFaceProps): React.ReactElement {
   const { palette } = book;
-  const maxSize = titleMaxSize(7 / 5 / 1.09, book.titleLines.length);
+  const lines = book.titleLines.length;
+  const desktopMax = titleMaxSize(7 / 5 / 1.09, lines);
+  const mobileMax = titleMaxSize(10 / 9 / 1.09, lines);
   return (
     <div
       className="book-face absolute inset-0 flex flex-col justify-center overflow-hidden px-[6%]"
       style={{ background: palette.bg, boxShadow: COVER_SHADOW }}
     >
-      <div>
+      <div className="sm:hidden">
         {book.titleLines.map((line, index) => (
           <FitLine
             key={`${line}-${index}`}
             text={line}
             fill={palette.fg}
-            maxSize={maxSize}
+            maxSize={mobileMax}
+          />
+        ))}
+      </div>
+      <div className="hidden sm:block">
+        {book.titleLines.map((line, index) => (
+          <FitLine
+            key={`${line}-${index}`}
+            text={line}
+            fill={palette.fg}
+            maxSize={desktopMax}
           />
         ))}
       </div>
@@ -96,12 +110,13 @@ export default async function BookPage({
   const book = getBook(parseId(id));
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center overflow-hidden px-6 py-16">
+    <main className="flex min-h-screen flex-col items-center justify-center overflow-hidden px-3 py-10 sm:px-6 sm:py-16">
       <Link
         href="/"
-        className="font-display fixed left-6 top-6 z-10 text-[13px] tracking-wide text-ink hover:underline"
+        className="font-display fixed left-4 top-4 z-10 text-[13px] tracking-wide text-ink hover:underline sm:left-6 sm:top-6"
       >
-        &larr; BACK TO THE TABLE
+        &larr; BACK
+        <span className="hidden sm:inline"> TO THE TABLE</span>
       </Link>
 
       {/* No scene-wide preserve-3d: WebKit sorts 3D siblings unreliably
@@ -118,10 +133,11 @@ export default async function BookPage({
               style={{ transform: "perspective(1600px) rotateX(16deg)" }}
             >
               {/* Cover slot: non-rotating ground shadow + flipping cover.
-                  z-10 keeps the swinging cover above the text page. */}
+                  z-10 keeps the swinging cover above the text page. Mobile
+                  pages run near full width, each about half the viewport. */}
               <div
-                className="relative z-10 w-[min(66vw,300px)] sm:w-[min(42vw,420px)]"
-                style={{ aspectRatio: "5 / 7", perspective: "1600px" }}
+                className="relative z-10 aspect-[9/10] w-[min(92vw,360px)] sm:aspect-[5/7] sm:w-[min(42vw,420px)]"
+                style={{ perspective: "1600px" }}
               >
                 {/* Shadow + page-block edges the cover lands on */}
                 <div className="book-ground-shadow absolute inset-0">
@@ -138,8 +154,8 @@ export default async function BookPage({
 
               {/* Text page: white paper with the program-booklet copy */}
               <div
-                className="relative flex w-[min(66vw,300px)] flex-col bg-white px-[5%] py-[7%] sm:w-[min(42vw,420px)]"
-                style={{ aspectRatio: "5 / 7", boxShadow: PAGE_SHADOW }}
+                className="relative flex aspect-[9/10] w-[min(92vw,360px)] flex-col bg-white px-[5%] py-[6%] sm:aspect-[5/7] sm:w-[min(42vw,420px)] sm:py-[7%]"
+                style={{ boxShadow: PAGE_SHADOW }}
               >
                 {/* Gutter shadow where the page dives into the spine */}
                 <div className="absolute inset-x-0 top-0 h-[6px] bg-black/10 sm:inset-x-auto sm:inset-y-0 sm:left-0 sm:h-auto sm:w-[6px]" />
@@ -153,8 +169,10 @@ export default async function BookPage({
                   <p className="mt-1 text-[12px] tracking-widest">
                     {book.year}
                   </p>
-                  <hr className="my-5 border-t border-black/20" />
-                  <p className="text-[14px] leading-relaxed">{book.blurb}</p>
+                  <hr className="my-4 border-t border-black/20 sm:my-5" />
+                  <p className="text-[14px] leading-snug sm:leading-relaxed">
+                    {book.blurb}
+                  </p>
                   <div className="mt-auto flex items-end justify-between">
                     <span className="font-display text-[11px] leading-none">
                       CHERRY
