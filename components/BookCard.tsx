@@ -1,6 +1,33 @@
 import Link from "next/link";
-import type { Book } from "@/lib/books";
+import type { Book, PieceKind } from "@/lib/books";
 import { FitLine } from "@/components/FitLine";
+
+/** Physical thickness (px) of each piece kind's paper block. */
+const THICKNESS: Record<PieceKind, number> = {
+  flyer: 3,
+  booklet: 6,
+  stack: 16,
+  thickBook: 26,
+  blank: 14,
+};
+
+/** Warm paper-white for the page-block edges of piles and books. */
+const PAGE_EDGE = "#f1efe9";
+
+/**
+ * Darken a hex color by a factor (0..1), for the shadowed edge walls.
+ *
+ * @param hex - Color like "#e8391d"
+ * @param factor - 1 = unchanged, 0 = black
+ * @returns Darkened rgb() color string
+ */
+const darken = (hex: string, factor: number): string => {
+  const n = parseInt(hex.slice(1), 16);
+  const r = Math.round(((n >> 16) & 255) * factor);
+  const g = Math.round(((n >> 8) & 255) * factor);
+  const b = Math.round((n & 255) * factor);
+  return `rgb(${r}, ${g}, ${b})`;
+};
 
 /**
  * Props for the Wordmark component
@@ -45,13 +72,16 @@ interface BookCardProps {
 }
 
 /**
- * BookCard - One printed piece lying on the table.
+ * BookCard - One printed piece lying on the table, as a true 3D slab.
  *
- * Renders the book's physical kind (flyer, folded booklet, sheet stack,
- * thick book, or blank wordmark piece), its justified stacked-type cover via
- * `FitLine`, optional +/-90 degree type rotation, edge-bleed clipping, tiny
- * corner captions, and a soft shadow cast down-left (light source upper
- * right, as in the reference photo). The whole piece links to its spread.
+ * Rather than faking depth with offset flat layers, each piece is a box in
+ * the scene's preserve-3d space: the cover is lifted on the z-axis by the
+ * piece's physical thickness, and real left/bottom edge walls connect it to
+ * the table (those are the two faces visible from the camera angle). Page
+ * piles and thick books get paper-white block edges; single sheets get thin
+ * self-colored edges. A soft shadow is cast on the table underneath, offset
+ * down-left from the upper-right light source. The whole piece links to its
+ * open-spread page.
  *
  * @example
  * ```tsx
@@ -61,24 +91,18 @@ interface BookCardProps {
 export function BookCard({ book }: BookCardProps): React.ReactElement {
   const { palette } = book;
   const isSmallCard = book.height < 120;
-  const thick = book.kind === "thickBook" || book.kind === "stack";
-  // Layered shadows like the photo: a tight contact shadow hugging the sheet,
-  // a mid falloff, and a wide soft ambient — all cast down-left (light source
-  // upper right). Thick pieces sit higher, so their ambient is larger.
-  const shadow = thick
-    ? [
-        "0 1px 2px rgba(20, 20, 20, 0.14)",
-        "-6px 8px 10px rgba(20, 20, 20, 0.12)",
-        "-20px 26px 42px rgba(20, 20, 20, 0.20)",
-      ].join(", ")
-    : [
-        "0 1px 2px rgba(20, 20, 20, 0.12)",
-        "-4px 5px 7px rgba(20, 20, 20, 0.10)",
-        "-10px 13px 22px rgba(20, 20, 20, 0.13)",
-      ].join(", ");
-  /** Grounding shadow for the bottom-most sheet of piles and thick books */
-  const baseShadow =
-    "0 1px 2px rgba(20, 20, 20, 0.10), -12px 15px 24px rgba(20, 20, 20, 0.16)";
+  const t = THICKNESS[book.kind];
+  const paperBlock = book.kind !== "flyer" && book.kind !== "booklet";
+  // Page-block pieces show white paper edges; folded/single sheets show a
+  // thin darker slice of their own color.
+  const leftEdgeColor = paperBlock ? PAGE_EDGE : darken(palette.bg, 0.8);
+  const bottomEdgeColor = paperBlock
+    ? darken(PAGE_EDGE, 0.88)
+    : darken(palette.bg, 0.66);
+  const shadow = [
+    "0 1px 2px rgba(20, 20, 20, 0.14)",
+    `${-4 - t}px ${5 + t}px ${12 + t * 1.5}px rgba(20, 20, 20, 0.18)`,
+  ].join(", ");
   const rotationDeg =
     book.rotation === "ccw" ? -90 : book.rotation === "cw" ? 90 : 0;
   // Deterministic layout variation: center the type on some pieces,
@@ -87,9 +111,7 @@ export function BookCard({ book }: BookCardProps): React.ReactElement {
 
   const titleBlock = (
     <div
-      className={
-        book.bleed ? "relative -ml-[9%] w-[118%]" : "relative w-full"
-      }
+      className={book.bleed ? "relative -ml-[9%] w-[118%]" : "relative w-full"}
     >
       {book.titleLines.map((line, index) => (
         <FitLine key={`${line}-${index}`} text={line} fill={palette.fg} />
@@ -100,66 +122,46 @@ export function BookCard({ book }: BookCardProps): React.ReactElement {
   return (
     <Link
       href={`/book/${book.id}`}
-      className="relative block transition-transform duration-200 hover:-translate-y-2"
+      className="relative block transition-transform duration-200 hover:-translate-y-2 [transform-style:preserve-3d]"
       style={{
         width: book.width,
         height: book.height,
         transform: `translate(${book.jitterX}px, ${book.jitterY}px)`,
       }}
     >
-      {/* Physical depth layers, offset toward the shadow side (down-left) */}
-      {book.kind === "stack" && (
-        <>
-          <div
-            className="absolute inset-0"
-            style={{
-              background: palette.bg,
-              transform: "translate(-10px, 12px)",
-              filter: "brightness(0.9)",
-              boxShadow: baseShadow,
-            }}
-          />
-          <div
-            className="absolute inset-0"
-            style={{
-              background: palette.bg,
-              transform: "translate(-5px, 6px)",
-              filter: "brightness(0.95)",
-            }}
-          />
-        </>
-      )}
-      {book.kind === "thickBook" && (
-        <>
-          <div
-            className="absolute inset-0 bg-white"
-            style={{
-              transform: "translate(-9px, 10px)",
-              boxShadow: baseShadow,
-            }}
-          />
-          <div
-            className="absolute inset-0 border border-black/10 bg-white"
-            style={{ transform: "translate(-4px, 5px)" }}
-          />
-        </>
-      )}
-      {book.kind === "booklet" && (
-        <div
-          className="absolute inset-0"
-          style={{
-            background: palette.bg,
-            filter: "brightness(0.93)",
-            transform: "translate(-4px, 5px)",
-            boxShadow: baseShadow,
-          }}
-        />
-      )}
+      {/* Shadow cast on the table at z=0, under the raised slab */}
+      <div
+        className="absolute inset-0"
+        style={{ boxShadow: shadow, background: "rgba(20, 20, 20, 0.12)" }}
+      />
 
-      {/* Top sheet / front cover */}
+      {/* Left edge wall of the paper block */}
+      <div
+        className="absolute left-0 top-0 h-full origin-left"
+        style={{
+          width: t,
+          background: leftEdgeColor,
+          transform: "rotateY(-90deg)",
+        }}
+      />
+
+      {/* Bottom edge wall of the paper block */}
+      <div
+        className="absolute bottom-0 left-0 w-full origin-bottom"
+        style={{
+          height: t,
+          background: bottomEdgeColor,
+          transform: "rotateX(-90deg)",
+        }}
+      />
+
+      {/* Cover face, lifted by the block's thickness */}
       <div
         className="absolute inset-0 overflow-hidden"
-        style={{ background: palette.bg, boxShadow: shadow }}
+        style={{
+          background: palette.bg,
+          transform: `translateZ(${t}px)`,
+        }}
       >
         {book.kind === "blank" || isSmallCard ? (
           <div
@@ -169,7 +171,7 @@ export function BookCard({ book }: BookCardProps): React.ReactElement {
           >
             <Wordmark
               color={palette.fg}
-              size={isSmallCard ? "17px" : "26px"}
+              size={`${Math.round(book.width * 0.1)}px`}
             />
           </div>
         ) : rotationDeg === 0 ? (

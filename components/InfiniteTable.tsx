@@ -72,11 +72,11 @@ export function InfiniteTable(): React.ReactElement {
       >
         <div
           ref={pivotRef}
-          className="absolute left-1/2 top-1/2 h-0 w-0"
+          className="absolute left-1/2 top-1/2 h-0 w-0 [transform-style:preserve-3d]"
           style={{ transform: "rotateX(52deg) rotateZ(-32deg)" }}
         >
           <div
-            className="absolute grid"
+            className="absolute grid [transform-style:preserve-3d]"
             style={{
               width: PLANE_W,
               left: -PLANE_W / 2,
@@ -86,7 +86,10 @@ export function InfiniteTable(): React.ReactElement {
             }}
           >
             {books.map((book) => (
-              <div key={book.id} className="flex items-center justify-center">
+              <div
+                key={book.id}
+                className="flex items-center justify-center [transform-style:preserve-3d]"
+              >
                 <BookCard book={book} />
               </div>
             ))}

@@ -201,24 +201,24 @@ const sizeFor = (rand: () => number, kind: PieceKind): SizeVariant => {
   switch (kind) {
     case "flyer":
       return pick(rand, [
-        { width: 190, height: 266 }, // portrait flyer
-        { width: 232, height: 166 }, // landscape flyer
-        { width: 156, height: 268 }, // tall narrow flyer
+        { width: 215, height: 300 }, // portrait flyer
+        { width: 255, height: 182 }, // landscape flyer
+        { width: 178, height: 305 }, // tall narrow flyer
       ] as const);
     case "booklet":
       return pick(rand, [
-        { width: 206, height: 288 },
-        { width: 188, height: 250 },
+        { width: 228, height: 320 },
+        { width: 208, height: 277 },
       ] as const);
     case "stack":
       return pick(rand, [
-        { width: 194, height: 250 }, // letterhead pile
-        { width: 120, height: 70 }, // business cards
+        { width: 212, height: 273 }, // letterhead pile
+        { width: 156, height: 92 }, // business cards
       ] as const);
     case "thickBook":
-      return { width: 250, height: 332 };
+      return { width: 272, height: 362 };
     case "blank":
-      return { width: 200, height: 258 };
+      return { width: 218, height: 282 };
   }
 };
 
