@@ -37,15 +37,15 @@ body {
   }
 }
 
-@keyframes book-open-up {
-  0% {
-    transform: translateZ(2px) rotateX(-180deg);
+/* Opening a real book: the cover swings left while the book block glides
+   right, so the closed book starts centered and the open spread ends
+   centered. Runs in sync with book-open. */
+@keyframes book-shift {
+  from {
+    transform: translateX(-25%);
   }
-  72% {
-    transform: translateZ(2px) rotateX(9deg);
-  }
-  100% {
-    transform: translateZ(2px) rotateX(0deg);
+  to {
+    transform: translateX(0);
   }
 }
 
@@ -75,35 +75,45 @@ body {
   animation: book-settle 0.7s cubic-bezier(0.2, 0.7, 0.2, 1) both;
 }
 
+/* Mobile: no 3D flip (it reads poorly on a small stacked layout) — the
+   cover page simply fades up, then the text page follows. Desktop swings
+   the cover open around the spine while the book re-centers. */
 .book-flipper {
-  animation: book-open-up 1.3s cubic-bezier(0.55, 0.05, 0.35, 1) 0.45s both;
-  transform-origin: center bottom;
+  animation: page-fade 0.55s ease 0.2s both;
 }
 
-/* Cover face starts flipped over relative to the inside face; the flip axis
-   must match the hinge axis at each breakpoint. */
+.book-shift {
+  animation: none;
+}
+
+/* Cover back-face; hidden whenever the flipper is unrotated. */
 .book-face-cover {
-  transform: rotateX(180deg);
+  transform: rotateY(180deg);
+}
+
+.book-fade {
+  animation: page-fade 0.5s ease 0.8s both;
 }
 
 @media (min-width: 640px) {
   .book-flipper {
-    animation-name: book-open;
+    animation: book-open 1.3s cubic-bezier(0.55, 0.05, 0.35, 1) 0.45s both;
     transform-origin: right center;
   }
 
-  .book-face-cover {
-    transform: rotateY(180deg);
+  .book-shift {
+    animation: book-shift 1.3s cubic-bezier(0.55, 0.05, 0.35, 1) 0.45s both;
   }
-}
 
-.book-fade {
-  animation: page-fade 0.5s ease 1.45s both;
+  .book-fade {
+    animation-delay: 1.45s;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .book-settle,
   .book-flipper,
+  .book-shift,
   .book-fade {
     animation: none;
   }

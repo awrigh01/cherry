@@ -25,7 +25,9 @@ export const titleMaxSize = (
   fraction = 0.82,
 ): number => {
   const budget = heightOverWidth * 100 * fraction;
-  return Math.max(MIN_SIZE, Math.min(MAX_SIZE, budget / (lineCount * LINE_RATIO)));
+  // No lower clamp here: fitting the container always wins over the
+  // preferred minimum size, otherwise many-line titles overflow the cover.
+  return Math.min(MAX_SIZE, budget / (lineCount * LINE_RATIO));
 };
 
 /**
@@ -62,7 +64,9 @@ export function FitLine({
   maxSize = MAX_SIZE,
 }: FitLineProps): React.ReactElement {
   const estimated = 100 / (CAP_ADVANCE * text.length);
-  const fontSize = Math.max(MIN_SIZE, Math.min(maxSize, estimated));
+  // maxSize (the container fit budget) is applied last so it always wins,
+  // even over the preferred minimum.
+  const fontSize = Math.min(maxSize, Math.max(MIN_SIZE, estimated));
   // When capped (short words), stretch up to 2.2x natural width instead of
   // forcing a grotesque full-bleed distortion.
   const naturalWidth = CAP_ADVANCE * fontSize * text.length;
