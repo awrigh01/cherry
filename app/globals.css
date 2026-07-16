@@ -40,6 +40,16 @@ body {
   mask-size: 340px 340px;
 }
 
+/* The second, lighter strike of the double exposure: nudged and re-tilted
+   against the main impression, with the wear mask shifted so its missing
+   patches don't line up with the top strike's. */
+.stamp-ghost {
+  transform: rotate(-1.4deg) translate(clamp(18px, 2.6vw, 44px), clamp(-30px, -1.8vw, -12px));
+  opacity: 0.38;
+  -webkit-mask-position: 187px 143px;
+  mask-position: 187px 143px;
+}
+
 /* --- Table card hover: grow slightly and give a quick shake --- */
 
 /* Uses the standalone `rotate` property so it composes with the card's
