@@ -15,16 +15,22 @@ const PLANE_W = COLS * CELL_W;
 const PLANE_TOP = -2300;
 const INITIAL_COUNT = 120;
 const BATCH = 60;
+/** Table pan distance per scrolled pixel */
+const SCROLL_SPEED = 1.35;
+/** Smoothing stiffness (per second); higher = snappier catch-up */
+const SMOOTHING = 9;
 
 /**
  * InfiniteTable - The perspective-tilted tabletop of books.
  *
  * A fixed full-viewport scene holds a large plane rotated with
  * `rotateX(52deg) rotateZ(-32deg)` (grid rows recede diagonally toward the
- * upper right, as in the reference photo). Document scroll translates the
- * plane along its own local Y axis so the camera pans across the table.
- * An IntersectionObserver sentinel at the bottom of an invisible spacer
- * appends the next deterministic batch of books; new pieces simply appear.
+ * upper right, as in the reference photo). Document scroll drives the pan:
+ * a requestAnimationFrame loop eases the plane toward the scroll position
+ * with an exponential damp (inertial, frame-rate independent), moving
+ * `SCROLL_SPEED` table pixels per scrolled pixel. An IntersectionObserver
+ * sentinel at the bottom of an invisible spacer appends the next
+ * deterministic batch of books; new pieces simply appear.
  *
  * @example
  * ```tsx
@@ -41,23 +47,61 @@ export function InfiniteTable(): React.ReactElement {
   useEffect(() => {
     // Uniform 3D scale shrinks the whole table (thickness included) on small
     // screens; scroll translation is divided back out so one scrolled pixel
-    // still pans roughly one screen pixel.
-    const apply = (): void => {
+    // still pans consistently regardless of scale.
+    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)");
+    let raf = 0;
+    let idle = true;
+    let current = 0;
+    let last = 0;
+
+    const targetOffset = (): number =>
+      (window.scrollY * SCROLL_SPEED) / scaleRef.current;
+
+    const apply = (offset: number): void => {
       if (pivotRef.current) {
         const s = scaleRef.current;
-        pivotRef.current.style.transform = `scale3d(${s}, ${s}, ${s}) rotateX(52deg) rotateZ(-32deg) translate3d(0, ${-window.scrollY / s}px, 0)`;
+        pivotRef.current.style.transform = `scale3d(${s}, ${s}, ${s}) rotateX(52deg) rotateZ(-32deg) translate3d(0, ${-offset}px, 0)`;
       }
     };
+
+    const tick = (now: number): void => {
+      const dt = Math.min((now - last) / 1000, 0.05);
+      last = now;
+      const target = targetOffset();
+      current = reduced.matches
+        ? target
+        : current + (target - current) * (1 - Math.exp(-SMOOTHING * dt));
+      if (Math.abs(target - current) < 0.3) {
+        current = target;
+        apply(current);
+        idle = true;
+        return;
+      }
+      apply(current);
+      raf = requestAnimationFrame(tick);
+    };
+
+    const wake = (): void => {
+      if (idle) {
+        idle = false;
+        last = performance.now();
+        raf = requestAnimationFrame(tick);
+      }
+    };
+
     const onResize = (): void => {
       scaleRef.current = window.innerWidth < 640 ? 0.62 : 1;
       setScale(scaleRef.current);
-      apply();
+      wake();
     };
     onResize();
-    window.addEventListener("scroll", apply, { passive: true });
+    current = targetOffset();
+    apply(current);
+    window.addEventListener("scroll", wake, { passive: true });
     window.addEventListener("resize", onResize);
     return () => {
-      window.removeEventListener("scroll", apply);
+      cancelAnimationFrame(raf);
+      window.removeEventListener("scroll", wake);
       window.removeEventListener("resize", onResize);
     };
   }, []);
@@ -90,7 +134,7 @@ export function InfiniteTable(): React.ReactElement {
       >
         <div
           ref={pivotRef}
-          className="absolute left-1/2 top-1/2 h-0 w-0 [transform-style:preserve-3d]"
+          className="absolute left-1/2 top-1/2 h-0 w-0 will-change-transform [transform-style:preserve-3d]"
           style={{ transform: "rotateX(52deg) rotateZ(-32deg)" }}
         >
           <div
@@ -114,13 +158,14 @@ export function InfiniteTable(): React.ReactElement {
           </div>
         </div>
       </div>
-      {/* Invisible scroll track; grows with each appended batch.
+      {/* Invisible scroll track; grows with each appended batch. Divided by
+          SCROLL_SPEED since each scrolled pixel pans further now.
           pointer-events-none so it never intercepts clicks meant for the
           fixed scene beneath it in the stacking order. */}
       <div
         aria-hidden
         className="pointer-events-none relative"
-        style={{ height: rows * CELL_H * scale }}
+        style={{ height: (rows * CELL_H * scale) / SCROLL_SPEED }}
       >
         <div ref={sentinelRef} className="absolute bottom-0 h-px w-px" />
       </div>
