@@ -111,11 +111,11 @@ const NOUNS = [
   "PIE",
   "BASKET",
   "HARVEST",
-  "AURA",
   "ERA",
   "GLOW",
   "VIBE",
   "SOFTNESS",
+  "MOOD",
 ] as const;
 
 const VERBS = [
@@ -253,7 +253,7 @@ const TEMPLATES: readonly TitleTemplate[] = [
   },
   {
     banks: [ADJECTIVES],
-    build: ([a]) => ["YOUR", "AURA", "IS", a],
+    build: ([a]) => ["YOUR", "GLOW", "IS", a],
   },
   {
     banks: [ADJECTIVES, ADJECTIVES],
