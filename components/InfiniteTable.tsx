@@ -19,18 +19,23 @@ const BATCH = 60;
 const SCROLL_SPEED = 1.35;
 /** Smoothing stiffness (per second); higher = snappier catch-up */
 const SMOOTHING = 9;
+/** Idle drift speed (plane px/s) before the user's first scroll */
+const DRIFT_SPEED = 14;
 
 /**
  * InfiniteTable - The perspective-tilted tabletop of books.
  *
  * A fixed full-viewport scene holds a large plane rotated with
  * `rotateX(52deg) rotateZ(-32deg)` (grid rows recede diagonally toward the
- * upper right, as in the reference photo). Document scroll drives the pan:
+ * upper right, as in the reference photo). Until the user scrolls, the plane
+ * drifts forward on its own at `DRIFT_SPEED`; the first scroll freezes the
+ * drift (as a constant base offset) and document scroll takes over the pan:
  * a requestAnimationFrame loop eases the plane toward the scroll position
  * with an exponential damp (inertial, frame-rate independent), moving
  * `SCROLL_SPEED` table pixels per scrolled pixel. An IntersectionObserver
  * sentinel at the bottom of an invisible spacer appends the next
- * deterministic batch of books; new pieces simply appear.
+ * deterministic batch of books, and the pan loop tops up the count directly
+ * so the drift never outruns the loaded rows.
  *
  * @example
  * ```tsx
@@ -43,6 +48,11 @@ export function InfiniteTable(): React.ReactElement {
   const pivotRef = useRef<HTMLDivElement | null>(null);
   const sentinelRef = useRef<HTMLDivElement | null>(null);
   const scaleRef = useRef(1);
+  const countRef = useRef(INITIAL_COUNT);
+
+  useEffect(() => {
+    countRef.current = count;
+  }, [count]);
 
   useEffect(() => {
     // Uniform 3D scale shrinks the whole table (thickness included) on small
@@ -53,9 +63,13 @@ export function InfiniteTable(): React.ReactElement {
     let idle = true;
     let current = 0;
     let last = 0;
+    // The idle drift accumulates here; once the user scrolls it freezes and
+    // remains as a constant base offset under the scroll-driven pan.
+    let drift = 0;
+    let drifting = !reduced.matches;
 
     const targetOffset = (): number =>
-      (window.scrollY * SCROLL_SPEED) / scaleRef.current;
+      (window.scrollY * SCROLL_SPEED) / scaleRef.current + drift;
 
     const apply = (offset: number): void => {
       if (pivotRef.current) {
@@ -64,20 +78,33 @@ export function InfiniteTable(): React.ReactElement {
       }
     };
 
+    // Keep enough rows mounted for the current pan plus a screen of margin;
+    // the drift advances without moving scrollY, so the scroll sentinel
+    // alone can't be trusted to load ahead of it.
+    const ensureLoaded = (offset: number): void => {
+      const needed =
+        (Math.ceil((offset - PLANE_TOP) / CELL_H) + 8) * COLS;
+      if (needed > countRef.current) {
+        setCount((value) => Math.max(value, needed));
+      }
+    };
+
     const tick = (now: number): void => {
       const dt = Math.min((now - last) / 1000, 0.05);
       last = now;
+      if (drifting) drift += DRIFT_SPEED * dt;
       const target = targetOffset();
       current = reduced.matches
         ? target
         : current + (target - current) * (1 - Math.exp(-SMOOTHING * dt));
-      if (Math.abs(target - current) < 0.3) {
+      if (Math.abs(target - current) < 0.3 && !drifting) {
         current = target;
         apply(current);
         idle = true;
         return;
       }
       apply(current);
+      ensureLoaded(current);
       raf = requestAnimationFrame(tick);
     };
 
@@ -89,6 +116,12 @@ export function InfiniteTable(): React.ReactElement {
       }
     };
 
+    // The first real scroll hands control to the scrollbar for good.
+    const onScroll = (): void => {
+      drifting = false;
+      wake();
+    };
+
     const onResize = (): void => {
       scaleRef.current = window.innerWidth < 640 ? 0.62 : 1;
       setScale(scaleRef.current);
@@ -97,11 +130,12 @@ export function InfiniteTable(): React.ReactElement {
     onResize();
     current = targetOffset();
     apply(current);
-    window.addEventListener("scroll", wake, { passive: true });
+    wake();
+    window.addEventListener("scroll", onScroll, { passive: true });
     window.addEventListener("resize", onResize);
     return () => {
       cancelAnimationFrame(raf);
-      window.removeEventListener("scroll", wake);
+      window.removeEventListener("scroll", onScroll);
       window.removeEventListener("resize", onResize);
     };
   }, []);
