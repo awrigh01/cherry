@@ -148,6 +148,11 @@ body {
    shadow look comes from cross-fading two static-shadow child layers —
    animating box-shadow itself repaints the blurred region every frame and
    caused visible stutter. */
+/* Transform must finish at the same 72% land mark as book-open /
+   book-shift. The left page-block (this element + its paper edges) used
+   to keep scaling out through 100%, so a white sheet appeared to slide
+   into place after the cover had already landed. Opacity can keep
+   fading; only the geometry is pinned to the land. */
 @keyframes shadow-land {
   0% {
     opacity: 0;
@@ -156,9 +161,7 @@ body {
   20% {
     opacity: 1;
   }
-  55% {
-    transform: translateZ(-1px) translateX(14%) scaleX(0.72);
-  }
+  72%,
   100% {
     opacity: 1;
     transform: translateZ(-1px) translateX(0) scaleX(1);

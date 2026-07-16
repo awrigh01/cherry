@@ -152,14 +152,16 @@ export default async function BookPage({
                 className="relative z-10 aspect-[9/10] w-[min(92vw,360px)] sm:aspect-[5/7] sm:w-[min(42vw,420px)]"
                 style={{ perspective: "1600px" }}
               >
-                {/* Shadow + page-block edges the cover lands on. The two
-                    shadow layers cross-fade (airborne soft -> landed hard)
-                    so no box-shadow value ever animates. */}
+                {/* Page-block edges stay full-size under the cover — they
+                    must NOT live inside book-ground-shadow, whose scaleX
+                    would make them slide into place after the cover lands. */}
+                <div className="absolute -bottom-[5px] left-[6px] right-0 hidden h-[5px] bg-[#eceae4] sm:block" />
+                <div className="absolute -bottom-[10px] left-[13px] right-0 hidden h-[5px] bg-[#e2dfd7] sm:block" />
+                {/* Shadow only: soft/hard layers cross-fade; geometry lands
+                    with the cover (see shadow-land at 72%). */}
                 <div className="book-ground-shadow absolute inset-0">
                   <div className="book-shadow-soft" />
                   <div className="book-shadow-hard" />
-                  <div className="absolute -bottom-[5px] left-[6px] right-0 hidden h-[5px] bg-[#eceae4] sm:block" />
-                  <div className="absolute -bottom-[10px] left-[13px] right-0 hidden h-[5px] bg-[#e2dfd7] sm:block" />
                 </div>
                 <div className="book-flipper absolute inset-0">
                   <CoverFace book={book} />
