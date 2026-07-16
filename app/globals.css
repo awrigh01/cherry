@@ -129,12 +129,15 @@ body {
 
 /* Opening a real book: the cover swings left while the book block glides
    right, so the closed book starts centered and the open spread ends
-   centered. Runs in sync with book-open. */
+   centered. The shift must finish at the same 72% mark where book-open
+   lands (the -9deg overshoot) — otherwise the white page keeps gliding
+   through the cover's settle-bounce and reads as "sliding out last". */
 @keyframes book-shift {
-  from {
+  0% {
     transform: translateX(-25%);
   }
-  to {
+  72%,
+  100% {
     transform: translateX(0);
   }
 }
