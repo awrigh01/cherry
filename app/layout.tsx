@@ -25,9 +25,9 @@ export const metadata: Metadata = {
 };
 
 /**
- * Lock the visual viewport on Safari / iOS: no horizontal pan, and the
- * layout stays edge-to-edge under the notch. Vertical scroll still works
- * (the table pans that way); overscroll rubber-banding is killed in CSS.
+ * Lock the visual viewport on Safari / iOS: no pinch-zoom sideways pan,
+ * edge-to-edge under the notch. Vertical document scroll (wheel / touch)
+ * stays enabled — the table pans that way.
  */
 export const viewport: Viewport = {
   width: "device-width",

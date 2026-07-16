@@ -196,7 +196,7 @@ export function InfiniteTable(): React.ReactElement {
   return (
     <main>
       <div
-        className="fixed inset-0 overflow-hidden overscroll-none touch-pan-y"
+        className="fixed inset-0 overflow-hidden"
         style={{ perspective: "1700px" }}
       >
         <div
