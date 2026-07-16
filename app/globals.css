@@ -19,6 +19,49 @@ body {
   font-family: var(--font-archivo), sans-serif;
 }
 
+/* --- Table card hover: grow slightly and give a quick shake --- */
+
+/* Uses the standalone `rotate` property so it composes with the card's
+   inline jitter transform instead of overriding it. */
+@keyframes book-shake {
+  0%,
+  100% {
+    rotate: 0deg;
+  }
+  20% {
+    rotate: 2deg;
+  }
+  45% {
+    rotate: -1.7deg;
+  }
+  70% {
+    rotate: 1.1deg;
+  }
+  85% {
+    rotate: -0.5deg;
+  }
+}
+
+.book-card {
+  transition:
+    scale 0.25s cubic-bezier(0.2, 0.7, 0.2, 1),
+    translate 0.25s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+.book-card:hover {
+  scale: 1.07;
+  translate: 0 -10px;
+  animation: book-shake 0.5s ease-in-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .book-card:hover {
+    animation: none;
+    scale: 1;
+    translate: 0 0;
+  }
+}
+
 /* --- Book-opening animation (detail page) --- */
 
 /* The front cover swings open around the spine with a small settle-bounce.

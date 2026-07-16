@@ -133,7 +133,7 @@ export function BookCard({ book }: BookCardProps): React.ReactElement {
   return (
     <Link
       href={`/book/${book.id}`}
-      className="relative block transition-transform duration-200 hover:-translate-y-2 [transform-style:preserve-3d]"
+      className="book-card relative block [transform-style:preserve-3d]"
       style={{
         width: book.width,
         height: book.height,
