@@ -1,12 +1,13 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { getBooks } from "@/lib/books";
+import { getBooks, GRID_COLS } from "@/lib/books";
 import { BookCard } from "@/components/BookCard";
 
 // Cells must exceed the largest piece (272x362) plus +/-30px jitter so
-// neighbors can never overlap.
-const COLS = 10;
+// neighbors can never overlap. Column count comes from the generator, which
+// arranges the kind/palette mix per row.
+const COLS = GRID_COLS;
 const CELL_W = 385;
 const CELL_H = 465;
 const PLANE_W = COLS * CELL_W;

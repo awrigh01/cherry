@@ -66,16 +66,23 @@ const mulberry32 = (seed: number): (() => number) => {
 const pick = <T,>(rand: () => number, items: readonly T[]): T =>
   items[Math.floor(rand() * items.length)];
 
-/** Color pairings sampled from the reference photo, repeated for weighting. */
+/** Columns of the table grid; kind/palette mixing is arranged per row. */
+export const GRID_COLS = 10;
+
+/**
+ * Color pairings sampled from the reference photo. Yellow, red, and white
+ * appear twice for weighting; duplicates sit exactly 5 apart so the stride
+ * walk below never lands the same palette on two touching books.
+ */
 const PALETTES: readonly Palette[] = [
+  { bg: "#f2e400", fg: "#141414" }, // yellow + black (most frequent)
   { bg: "#e8391d", fg: "#f09ac0" }, // red + pink
-  { bg: "#e8391d", fg: "#f09ac0" },
   { bg: "#ffffff", fg: "#e8391d" }, // white + red
-  { bg: "#ffffff", fg: "#e8391d" },
   { bg: "#0d8a3c", fg: "#141414" }, // kelly green + black
   { bg: "#e6007e", fg: "#ffffff" }, // magenta + white
-  { bg: "#f2e400", fg: "#141414" }, // yellow + black (most frequent)
   { bg: "#f2e400", fg: "#141414" },
+  { bg: "#e8391d", fg: "#f09ac0" },
+  { bg: "#ffffff", fg: "#e8391d" },
   { bg: "#141414", fg: "#a8c6e8" }, // black + light blue
   { bg: "#b9a3e3", fg: "#141414" }, // lavender + black
 ];
@@ -303,18 +310,23 @@ const sizeFor = (rand: () => number, kind: PieceKind): SizeVariant => {
   }
 };
 
-/** Weighted piece kinds; flyers dominate like the photo. */
-const KINDS: readonly PieceKind[] = [
-  "flyer",
-  "flyer",
-  "flyer",
-  "flyer",
+/**
+ * One row's worth of piece kinds: flyers alternate with the rarer kinds, so
+ * every row is guaranteed a full mix (one stack, one thick book, one blank,
+ * two booklets, five flyers) with no two rare kinds side by side. The
+ * pattern rotates 3 per row, so columns vary too and identical kinds never
+ * stack vertically.
+ */
+const ROW_KINDS: readonly PieceKind[] = [
   "flyer",
   "booklet",
-  "booklet",
+  "flyer",
   "stack",
-  "stack",
+  "flyer",
   "thickBook",
+  "flyer",
+  "booklet",
+  "flyer",
   "blank",
 ];
 
@@ -331,12 +343,16 @@ const KINDS: readonly PieceKind[] = [
  */
 export const getBook = (id: number): Book => {
   const rand = mulberry32((id + 1) * 0x9e3779b9);
-  const kind = pick(rand, KINDS);
+  const col = id % GRID_COLS;
+  const row = Math.floor(id / GRID_COLS);
+  const kind = ROW_KINDS[(col + row * 3) % GRID_COLS];
   const titleLines = buildTitle(id);
   const author = `ARU ${pick(rand, CHERRY_VARIETIES)}`;
   const year = 1995 + Math.floor(rand() * 32);
   const blurb = `${pick(rand, OPENERS)}, ${pick(rand, MIDDLES)}. ${pick(rand, CLOSERS)}`;
 
+  // Palettes walk the grid with strides (3 across, 4 down) chosen so no two
+  // touching books — horizontally, vertically, or diagonally — share one.
   // Blank pieces are the near-empty letterhead / business-card wordmark ones.
   const palette: Palette =
     kind === "blank"
@@ -344,7 +360,7 @@ export const getBook = (id: number): Book => {
           { bg: "#ffffff", fg: "#141414" },
           { bg: "#141414", fg: "#ffffff" },
         ] as const)
-      : pick(rand, PALETTES);
+      : PALETTES[(col * 3 + row * 4) % PALETTES.length];
 
   const rotationRoll = rand();
   const rotation: TitleRotation =
