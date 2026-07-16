@@ -10,6 +10,9 @@ interface BookPageProps {
 
 const PAGE_SHADOW =
   "0 1px 2px rgba(20, 20, 20, 0.12), -18px 26px 44px rgba(20, 20, 20, 0.22)";
+/** Small self shadow for the flipping cover; the big ambient one is cast by
+ * the non-rotating ground-shadow element instead. */
+const COVER_SHADOW = "0 2px 8px rgba(20, 20, 20, 0.2)";
 
 /** Parse and validate the numeric book id from the URL, or 404. */
 const parseId = (raw: string): number => {
@@ -49,7 +52,7 @@ function CoverFace({ book, className }: CoverFaceProps): React.ReactElement {
   return (
     <div
       className={`absolute inset-0 flex flex-col justify-center overflow-hidden px-[6%] [backface-visibility:hidden] ${className ?? ""}`}
-      style={{ background: palette.bg, boxShadow: PAGE_SHADOW }}
+      style={{ background: palette.bg, boxShadow: COVER_SHADOW }}
     >
       <div>
         {book.titleLines.map((line, index) => (
@@ -110,19 +113,22 @@ export default async function BookPage({
               className="relative flex flex-col sm:flex-row [transform-style:preserve-3d]"
               style={{ transform: "rotateX(16deg)" }}
             >
-              {/* Page-block edges peeking out under the open book */}
-              <div className="absolute -bottom-[5px] left-[6px] right-[4px] h-[5px] bg-[#eceae4]" />
-              <div className="absolute -bottom-[10px] left-[13px] right-[9px] h-[5px] bg-[#e2dfd7]" />
-
-              {/* Front cover / inside page, hinged at the spine */}
+              {/* Cover slot: non-rotating ground shadow + flipping cover */}
               <div
-                className="book-flipper relative w-[min(66vw,300px)] sm:w-[min(42vw,420px)] [transform-style:preserve-3d]"
+                className="relative w-[min(66vw,300px)] sm:w-[min(42vw,420px)] [transform-style:preserve-3d]"
                 style={{ aspectRatio: "5 / 7" }}
               >
-                {/* Inside face: visible once the book is open */}
-                <CoverFace book={book} />
-                {/* Front-cover face: visible while the book is still closed */}
-                <CoverFace book={book} className="book-face-cover" />
+                {/* Shadow + page-block edges the cover lands on */}
+                <div className="book-ground-shadow absolute inset-0">
+                  <div className="absolute -bottom-[5px] left-[6px] right-0 hidden h-[5px] bg-[#eceae4] sm:block" />
+                  <div className="absolute -bottom-[10px] left-[13px] right-0 hidden h-[5px] bg-[#e2dfd7] sm:block" />
+                </div>
+                <div className="book-flipper absolute inset-0 [transform-style:preserve-3d]">
+                  {/* Inside face: visible once the book is open */}
+                  <CoverFace book={book} />
+                  {/* Front-cover face: visible while the book is closed */}
+                  <CoverFace book={book} className="book-face-cover" />
+                </div>
               </div>
 
               {/* Spine */}
@@ -133,6 +139,11 @@ export default async function BookPage({
                 className="relative flex w-[min(66vw,300px)] flex-col bg-white px-[5%] py-[7%] sm:w-[min(42vw,420px)]"
                 style={{ aspectRatio: "5 / 7", boxShadow: PAGE_SHADOW }}
               >
+                {/* Gutter shadow where the page dives into the spine */}
+                <div className="absolute inset-x-0 top-0 h-[6px] bg-black/10 sm:inset-x-auto sm:inset-y-0 sm:left-0 sm:h-auto sm:w-[6px]" />
+                {/* Page-block edges under the text page */}
+                <div className="absolute -bottom-[5px] left-0 right-[4px] h-[5px] bg-[#eceae4]" />
+                <div className="absolute -bottom-[10px] left-0 right-[9px] h-[5px] bg-[#e2dfd7]" />
                 <div className="book-fade flex min-h-0 grow flex-col">
                   <p className="font-display text-[15px] leading-tight">
                     {book.author}

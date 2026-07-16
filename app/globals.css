@@ -49,6 +49,20 @@ body {
   }
 }
 
+/* Ground shadow for the opening cover: sweeps out from the spine and lands
+   with the cover. Lives on a non-rotating element at table level, since a
+   shadow attached to the rotating cover would collapse edge-on with it. */
+@keyframes shadow-land {
+  from {
+    opacity: 0;
+    transform: translateX(45%) scaleX(0.15);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0) scaleX(1);
+  }
+}
+
 /* The whole book drops onto the table as it arrives */
 @keyframes book-settle {
   from {
@@ -72,14 +86,14 @@ body {
 }
 
 .book-settle {
-  animation: book-settle 0.7s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  animation: book-settle 0.5s cubic-bezier(0.2, 0.7, 0.2, 1) both;
 }
 
 /* Mobile: no 3D flip (it reads poorly on a small stacked layout) — the
    cover page simply fades up, then the text page follows. Desktop swings
    the cover open around the spine while the book re-centers. */
 .book-flipper {
-  animation: page-fade 0.55s ease 0.2s both;
+  animation: page-fade 0.45s ease 0.1s both;
 }
 
 .book-shift {
@@ -91,22 +105,34 @@ body {
   transform: rotateY(180deg);
 }
 
+.book-ground-shadow {
+  transform-origin: right center;
+  box-shadow:
+    0 1px 2px rgba(20, 20, 20, 0.12),
+    -18px 26px 44px rgba(20, 20, 20, 0.24);
+  animation: page-fade 0.45s ease 0.1s both;
+}
+
 .book-fade {
-  animation: page-fade 0.5s ease 0.8s both;
+  animation: page-fade 0.4s ease 0.5s both;
 }
 
 @media (min-width: 640px) {
   .book-flipper {
-    animation: book-open 1.3s cubic-bezier(0.55, 0.05, 0.35, 1) 0.45s both;
+    animation: book-open 0.9s cubic-bezier(0.55, 0.05, 0.35, 1) 0.25s both;
     transform-origin: right center;
   }
 
   .book-shift {
-    animation: book-shift 1.3s cubic-bezier(0.55, 0.05, 0.35, 1) 0.45s both;
+    animation: book-shift 0.9s cubic-bezier(0.55, 0.05, 0.35, 1) 0.25s both;
+  }
+
+  .book-ground-shadow {
+    animation: shadow-land 0.9s cubic-bezier(0.55, 0.05, 0.35, 1) 0.25s both;
   }
 
   .book-fade {
-    animation-delay: 1.45s;
+    animation-delay: 1.05s;
   }
 }
 
@@ -114,6 +140,7 @@ body {
   .book-settle,
   .book-flipper,
   .book-shift,
+  .book-ground-shadow,
   .book-fade {
     animation: none;
   }
